@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rlUnban"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="10dp"
+    android:paddingLeft="5dp"
+    android:paddingTop="10dp">
+
+    <com.inscripts.custom.RoundedImageView
+        android:id="@+id/imageViewShowUserAvatar"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="8dp"
+        android:padding="5dp"
+        android:src="@drawable/default_avatar" />
+
+    <TextView
+        android:id="@+id/textViewChatroomMemberName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="25dp"
+        android:layout_toRightOf="@id/imageViewShowUserAvatar"
+        android:text="@string/username_hint"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="5dp"
+        android:button="@drawable/custom_invite_user_checkbox_selector"
+        android:checked="false"
+        android:clickable="false"
+        android:focusable="false"
+        android:paddingRight="10dp" />
+</RelativeLayout>

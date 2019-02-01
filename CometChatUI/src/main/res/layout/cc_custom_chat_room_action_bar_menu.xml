@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/chatRoomPopup"
+    android:gravity="end"
+    android:paddingRight="12dp"
+    android:paddingEnd="12dp"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:background="#f8f8f8"
+        android:elevation="10dp"
+        android:padding="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/ll_view_member"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_view_profile"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="image"
+                    android:padding="10dp"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:src="@drawable/cc_ic_default_avtar" />
+
+                <TextView
+                    android:id="@+id/textViewMember"
+                    android:layout_width="150dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@+id/action_bar_menu_view_profile"
+                    android:layout_toEndOf="@+id/action_bar_menu_view_profile"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="View member" />
+
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/ll_chatroom_clear_conversation"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_clear_conversation"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:contentDescription="image"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_ic_clear_conversation" />
+
+                <TextView
+                    android:id="@+id/textClearConversation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@+id/action_bar_menu_clear_conversation"
+                    android:layout_toEndOf="@+id/action_bar_menu_clear_conversation"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/clear_conversation" />
+
+            </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/ll_invite_user"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/image_view_menu_invite_users"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="image"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_ic_report_conversation" />
+
+                <TextView
+                    android:id="@+id/textInviteUsers"
+                    android:layout_width="170dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@+id/image_view_menu_invite_users"
+                    android:layout_toEndOf="@+id/image_view_menu_invite_users"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/invite_users" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ll_unban_user"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/image_view_menu_unban_users"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="image"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_ic_blocked_users" />
+
+                <TextView
+                    android:id="@+id/textUnbanUsers"
+                    android:layout_width="170dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@id/image_view_menu_unban_users"
+                    android:layout_marginLeft="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/unban_users" />
+
+            </RelativeLayout>
+
+        <!--</LinearLayout>-->
+
+
+
+        <RelativeLayout
+                android:id="@+id/ll_pick_color"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_pick_color"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="image"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_ic_color_your_text" />
+
+                <TextView
+                    android:id="@+id/colorYourText"
+                    android:layout_width="170dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@+id/action_bar_menu_pick_color"
+                    android:layout_toEndOf="@+id/action_bar_menu_pick_color"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/color_your_text" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ll_leave_chatroom"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_leave_chatroom"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:contentDescription="image"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_ic_block_user" />
+
+                <TextView
+                    android:id="@+id/textLeaveChatroom"
+                    android:layout_width="150dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@+id/action_bar_menu_leave_chatroom"
+                    android:layout_toEndOf="@+id/action_bar_menu_leave_chatroom"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/leave_chatroom" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ll_delete_chatroom"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_delete_chatroom"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:contentDescription="image"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_group_delete" />
+
+                <TextView
+                    android:id="@+id/textDeleteChatroom"
+                    android:layout_width="150dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@id/action_bar_menu_delete_chatroom"
+                    android:layout_toEndOf="@id/action_bar_menu_delete_chatroom"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/delete_chatroom" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ll_rename_chatroom"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_rename_chatroom"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:contentDescription="image"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_rename_group" />
+
+                <TextView
+                    android:id="@+id/textRenameChatroom"
+                    android:layout_width="150dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@id/action_bar_menu_rename_chatroom"
+                    android:layout_toEndOf="@id/action_bar_menu_rename_chatroom"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/rename_chatroom" />
+
+            </RelativeLayout>
+
+    </LinearLayout>
+
+</LinearLayout>
+</ScrollView>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:paddingBottom="10dp"
+    android:paddingLeft="5dp"
+    android:paddingStart="5dp"
+    android:paddingTop="10dp"
+    android:clickable="true"
+    android:background="?attr/selectableItemBackground">
+
+    <ImageView
+        android:id="@+id/imageviewchatroomAvatar"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_centerVertical="true"
+        android:padding="10dp"
+        android:layout_margin="8dp"
+        android:background="@drawable/cc_circular_background"
+        android:src="@drawable/cc_ic_group" />
+
+    <TextView
+        android:id="@+id/textviewChatroomName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_toRightOf="@+id/imageviewchatroomAvatar"
+        android:layout_toEndOf="@+id/imageviewchatroomAvatar"
+        android:layout_toLeftOf="@+id/textviewChatroomUnreadCount"
+        android:layout_toStartOf="@+id/textviewChatroomUnreadCount"
+        android:layout_marginTop="9dp"
+        android:singleLine="true"
+        tools:text="@tools:sample/last_names"
+        android:textColor="#000"
+        android:textSize="17sp"
+        android:fontFamily="sans-serif"
+        android:maxLines="1"
+        android:ellipsize="end"/>
+
+    <TextView
+        android:id="@+id/textviewUsersOnlineMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textviewChatroomName"
+        android:layout_alignStart="@+id/textviewChatroomName"
+        android:layout_below="@+id/textviewChatroomName"
+        android:gravity="left"
+        android:text="@string/users_online"
+        android:textColor="#7A7A7A"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/textViewChatroomUsersOnline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/textviewUsersOnlineMessage"
+        android:layout_toRightOf="@id/textviewUsersOnlineMessage"
+        android:layout_toEndOf="@id/textviewUsersOnlineMessage"
+        android:paddingLeft="2dp"
+        android:paddingStart="2dp"
+        android:text="0"
+        android:textColor="@color/colorAccent"
+        android:textSize="12sp" />
+
+    <ImageView
+        android:id="@+id/imageviewforwardArrow"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
+        android:src="@drawable/cc_ic_forward_arrow" />
+
+    <TextView
+        android:id="@+id/textviewChatroomUnreadCount"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_toLeftOf="@+id/imageviewforwardArrow"
+        android:layout_toStartOf="@+id/imageviewforwardArrow"
+        android:background="@drawable/cc_circular_background"
+        android:gravity="center_vertical|center_horizontal"
+        android:padding="1dp"
+        android:singleLine="true"
+        android:text="@string/unread_count"
+        android:textColor="#FFF"
+        android:textSize="11sp" />
+
+    <ImageView
+        android:id="@+id/imageViewGroupProtected"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="5dp"
+        android:layout_marginEnd="5dp"
+        android:layout_toLeftOf="@+id/textviewChatroomUnreadCount"
+        android:layout_toStartOf="@+id/textviewChatroomUnreadCount"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/image_preview"
+        android:maxWidth="24dp"
+        android:padding="3dp"
+        android:visibility="gone"
+        android:src="@drawable/ic_custom_chatroom_protected" />
+
+</RelativeLayout>

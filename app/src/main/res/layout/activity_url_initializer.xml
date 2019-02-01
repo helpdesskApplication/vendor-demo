@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_white"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true"
+    tools:context=".CCUrlInitializerActivity">
+
+    <ImageView
+        android:id="@+id/imageViewCometchatLogo"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="40dp"
+        android:adjustViewBounds="true"
+        android:src="@drawable/logo_login"
+        android:tint="@color/color_black" />
+
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/input_layout_txt_url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/imageViewCometchatLogo"
+        android:layout_margin="30dp"
+        android:layout_marginTop="30dp"
+        android:gravity="center">
+
+        <EditText
+            android:id="@+id/editTextURL"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:hint="@string/url_field_text"
+            android:inputType="textUri"
+            android:singleLine="true"
+            android:textCursorDrawable="@null"
+            android:theme="@style/TextLabel"
+            android:visibility="visible" />
+
+    </android.support.design.widget.TextInputLayout>
+
+
+    <Button
+        android:id="@+id/buttonDemoLogin"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_below="@+id/input_layout_txt_url"
+        android:layout_centerInParent="true"
+        android:layout_marginLeft="60dp"
+        android:background="@drawable/circular_button_background"
+        android:maxWidth="200dp"
+        android:minWidth="150dp"
+        android:text="@string/login_button_text"
+        android:textAllCaps="false"
+        android:textColor="@color/color_white"
+        android:textSize="16sp"
+        android:visibility="visible" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_below="@id/buttonDemoLogin"
+        android:layout_marginTop="60dp">
+
+        <ProgressBar
+            android:id="@+id/progress_weel"
+            style="@style/Widget.AppCompat.ProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:theme="@style/CircularProgress"
+            android:visibility="invisible" />
+
+        <RelativeLayout
+            android:id="@+id/rlError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="invisible">
+
+            <TextView
+                android:id="@+id/tvError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Please check internet connection. "
+                android:textColor="@color/colorPrimary"
+                android:textSize="16sp" />
+        </RelativeLayout>
+    </RelativeLayout>
+
+</RelativeLayout>

@@ -1,0 +1,6 @@
+<resources>
+
+    <dimen name="max_container_lenght">200dp</dimen>
+    <dimen name="max_container_lenght_left">180dp</dimen>
+    <dimen name="emoji_size">30dp</dimen>
+</resources>

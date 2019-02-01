@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/singleChatCustomPopup"
+    android:gravity="end"
+    android:paddingRight="12dp"
+    android:paddingEnd="12dp"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:background="#f8f8f8"
+        android:elevation="10dp"
+        android:padding="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+            <RelativeLayout
+                android:id="@+id/ll_view_profile"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_view_profile"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="image"
+                    android:padding="10dp"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:src="@drawable/cc_ic_default_avtar" />
+
+                <TextView
+                    android:id="@+id/tv_view_profile"
+                    android:layout_width="150dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@+id/action_bar_menu_view_profile"
+                    android:layout_toEndOf="@+id/action_bar_menu_view_profile"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/title_activity_view_user_profile" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ll_clear_conversation"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_clear_conversation"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:contentDescription="image"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_ic_clear_conversation" />
+
+                <TextView
+                    android:id="@+id/tv_clear_conversation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@+id/action_bar_menu_clear_conversation"
+                    android:layout_toEndOf="@+id/action_bar_menu_clear_conversation"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/clear_conversation" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ll_report_conversation"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_report_conversation"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:contentDescription="image"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_ic_report_conversation" />
+
+                <TextView
+                    android:id="@+id/tv_reportConversation"
+                    android:layout_width="210dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:singleLine="true"
+                    android:layout_toRightOf="@+id/action_bar_menu_report_conversation"
+                    android:layout_toEndOf="@+id/action_bar_menu_report_conversation"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/report_conversation" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/ll_block_user"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:padding="10dp"
+                android:clickable="true"
+                android:background="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/action_bar_menu_block_user"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/cc_menu_button_background"
+                    android:contentDescription="image"
+                    android:padding="10dp"
+                    android:src="@drawable/cc_ic_block_user" />
+
+                <TextView
+                    android:id="@+id/tv_block_user"
+                    android:layout_width="150dp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:layout_toRightOf="@+id/action_bar_menu_block_user"
+                    android:layout_toEndOf="@+id/action_bar_menu_block_user"
+                    android:layout_marginLeft="15dp"
+                    android:layout_marginStart="15dp"
+                    android:textColor="#787878"
+                    android:textSize="18sp"
+                    android:text="@string/block_user" />
+
+            </RelativeLayout>
+    </LinearLayout>
+
+</LinearLayout>

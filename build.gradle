@@ -1,0 +1,32 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.google.gms:google-services:3.2.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+
+        maven{
+            url 'https://dl.bintray.com/cometchat/CometChat'
+        }
+    }
+
+}
+
+subprojects {
+    tasks.withType(Javadoc).all { enabled = false }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

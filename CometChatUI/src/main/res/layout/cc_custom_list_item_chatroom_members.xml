@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rlUser"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingBottom="10dp"
+    android:paddingLeft="5dp"
+    android:paddingStart="5dp"
+    android:paddingTop="10dp">
+
+
+    <com.inscripts.custom.RoundedImageView
+        android:id="@+id/imageViewShowUserAvatar"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="8dp"
+        android:layout_marginStart="8dp"
+        android:padding="5dp"
+        android:src="@drawable/cc_default_avatar" />
+
+    <TextView
+        android:id="@+id/textViewChatroomMemberName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="25dp"
+        android:layout_toRightOf="@id/imageViewShowUserAvatar"
+        android:text="@string/username_hint"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#999"
+        android:layout_below="@+id/imageViewShowUserAvatar"
+        android:layout_alignStart="@+id/textViewChatroomMemberName"
+        android:layout_alignLeft="@+id/textViewChatroomMemberName"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"/>
+
+    <ImageView
+        android:id="@+id/ownerOptions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/cc_more_settings"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:tint="#999"
+        android:rotation="90"
+        android:visibility="invisible"
+        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_centerVertical="true"/>
+
+
+</RelativeLayout>

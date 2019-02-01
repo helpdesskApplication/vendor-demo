@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dp"
+                android:paddingLeft="5dp"
+                android:paddingStart="5dp"
+                android:paddingTop="10dp">
+
+    <com.inscripts.custom.RoundedImageView
+        android:id="@+id/imageViewUserAvatar"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_centerVertical="true"
+        android:paddingLeft="10dp"
+        android:paddingStart="10dp"
+        android:padding="5dp"
+        android:layout_margin="5dp"
+        android:src="@drawable/ic_tab_one_on_one"/>
+
+    <TextView
+        android:id="@+id/textViewUserToInvite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_toStartOf="@+id/checkBoxInviteUser"
+        android:layout_toLeftOf="@+id/checkBoxInviteUser"
+        android:layout_toEndOf="@+id/imageViewUserAvatar"
+        android:layout_toRightOf="@+id/imageViewUserAvatar"
+        android:paddingTop="2dp"
+        android:text="@string/username_hint"
+        android:layout_marginTop="15dp"
+        android:textColor="@android:color/black"
+        android:textSize="17sp"
+        android:fontFamily="sans-serif"
+       />
+
+    <CheckBox
+        android:id="@+id/checkBoxInviteUser"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:checked="false"
+        android:clickable="false"
+        android:focusable="false"
+        android:scaleX="1.30"
+        android:scaleY="1.30"
+        android:paddingEnd="10dp"
+        android:paddingRight="10dp"/>
+
+    <TextView
+        android:id="@+id/textViewUserStatusToInvite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/imageViewUserAvatar"
+        android:layout_toRightOf="@+id/imageViewStatusIconToInvite"
+        android:layout_toEndOf="@+id/imageViewStatusIconToInvite"
+        android:layout_toLeftOf="@id/checkBoxInviteUser"
+        android:layout_toStartOf="@id/checkBoxInviteUser"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:visibility="gone"
+        android:text="@string/status_message"
+        android:textColor="@android:color/black"
+        android:textSize="12sp"/>
+
+    <ImageView
+        android:id="@+id/imageViewStatusIconToInvite"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_alignLeft="@+id/textViewUserToInvite"
+        android:layout_alignStart="@+id/textViewUserToInvite"
+        android:layout_alignTop="@+id/textViewUserStatusToInvite"
+        android:layout_marginTop="1dp"
+        android:contentDescription="@string/image_preview"
+        android:paddingRight="5dp"
+        android:paddingEnd="5dp"
+        android:visibility="gone"
+        android:src="@drawable/cc_status_available"/>
+
+
+</RelativeLayout>
