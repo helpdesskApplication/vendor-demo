@@ -1,6 +1,7 @@
 package fragments;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -9,12 +10,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.constraint.Group;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.ActionMode;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -52,12 +58,15 @@ import com.inscripts.utils.StaticMembers;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+
 import Keys.BroadCastReceiverKeys;
 import activities.CCGroupChatActivity;
 import activities.CCSingleChatActivity;
 import adapters.RecentListAdapter;
 import cometchat.inscripts.com.cometchatcore.coresdk.CometChat;
 import cometchat.inscripts.com.readyui.R;
+import fm.icelink.LogEvent;
 import models.Contact;
 import models.Conversation;
 import models.Groups;
@@ -84,6 +93,9 @@ public class RecentFragment extends Fragment implements LoaderManager.LoaderCall
     boolean isModerator;
     boolean isOwner;
     private FeatureState groupState;
+    private Context context;
+    private HashMap<View,Boolean> longPressedViewsMap;
+    private String contactId;
 
     public RecentFragment() {
         // Required empty public constructor
@@ -101,6 +113,12 @@ public class RecentFragment extends Fragment implements LoaderManager.LoaderCall
 
         setHasOptionsMenu(true);
         PreferenceHelper.initialize(getActivity());
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.context = context;
     }
 
     @Override
@@ -195,7 +213,32 @@ public class RecentFragment extends Fragment implements LoaderManager.LoaderCall
 
             @Override
             public void onLongClick(View view, int i) {
-
+                final String chatroomId = (String) view.getTag(R.string.group_id);
+                final String contactId = (String) view.getTag(R.string.contact_id);
+                boolean isGroup = false;
+                int id;
+                if(chatroomId.equals("0")){
+                    isGroup = false;
+                    id = Integer.parseInt(contactId);
+                }else {
+                    isGroup = true;
+                    id = Integer.parseInt(chatroomId);
+                }
+                if (longPressedViewsMap == null) {
+                    longPressedViewsMap = new HashMap<>();
+                }
+                try {
+                    if(!longPressedViewsMap.containsKey(view) || !longPressedViewsMap.get(view)){
+                        view.setBackgroundColor(Color.parseColor("#F6F6F6"));
+                        longPressedViewsMap.put(view, true);
+                    }else {
+                        view.setBackgroundColor(Color.WHITE);
+                        longPressedViewsMap.put(view, false);
+                    }
+                    ((LongPressed)context).onLongPressed(id,isGroup);
+                } catch (ClassCastException e) {
+                    Logger.error(TAG, "onLongClick: exception: "+e.getLocalizedMessage() );
+                }
             }
         }));
 
@@ -207,10 +250,11 @@ public class RecentFragment extends Fragment implements LoaderManager.LoaderCall
     }
 
     private void initializeFeatureState() {
-      groupState = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.CREATE_GROUPS_ENABLED));
+      groupState = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.GROUP_CHAT_ENABLED));
     }
 
     private void enterInGroup() {
+        Logger.error(TAG, "enterInGroup: chatRoomId: "+chatroomId );
         PreferenceHelper.save("WINDOW ID",chatroomId);
         Groups chatroom = Groups.getGroupDetails(chatroomId);
 
@@ -662,5 +706,9 @@ public class RecentFragment extends Fragment implements LoaderManager.LoaderCall
                 e.printStackTrace();
             }
         }
+    }
+
+    public interface LongPressed{
+        void onLongPressed(int id, boolean isGroup);
     }
 }

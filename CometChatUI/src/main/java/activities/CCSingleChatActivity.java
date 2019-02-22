@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.database.MergeCursor;
@@ -72,6 +73,7 @@ import com.inscripts.custom.StickyHeaderDecoration;
 import com.inscripts.enums.FeatureState;
 import com.inscripts.enums.SettingSubType;
 import com.inscripts.enums.SettingType;
+import com.inscripts.enums.Status;
 import com.inscripts.factories.DataCursorLoader;
 import com.inscripts.factories.LocalStorageFactory;
 import com.inscripts.helpers.CCPermissionHelper;
@@ -104,7 +106,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -118,6 +119,7 @@ import cometchat.inscripts.com.cometchatcore.coresdk.CometChat;
 import cometchat.inscripts.com.cometchatcore.coresdk.MessageSDK;
 import cometchat.inscripts.com.readyui.R;
 import customsviews.ConfirmationWindow;
+import helpers.CCAnalyticsHelper;
 import helpers.CCMessageHelper;
 import helpers.FileSharing;
 import helpers.NotificationDataHelper;
@@ -135,11 +137,13 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
 
     private Toolbar toolbar;
     private RelativeLayout ccContainer, customMenu, chatFooter;
-    private int colorPrimary, colorPrimaryDark;
+    private int colorPrimaryDark;
+    private static int colorPrimary;
     private long contactId;
     private static Contact contact;
-    private boolean isCloseWindowEnabled;
-    private String contactName, picassImageName, audioFileNamewithPath;
+    private boolean setBackButton = true;
+    private String contactName, picassImageName;
+    private static String audioFileNamewithPath;
     private Intent data;
     private EditText messageField;
     private ImageButton sendButton,voiceNotebtn,btnMenu,btnChatMenuKeyBoard,btnChatMenuSharePhoto,btnChatMenuShareVideo, btnChatMenuSmiliey,
@@ -155,8 +159,9 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     private int messageCount = -1;
     private BroadcastReceiver broadcastReceiver;
     private Bitmap picassaBitmap;
-    private boolean isRecording = false, isVoiceNoteplaying = false;
-    private MediaRecorder voiceRecorder;
+    private boolean isVoiceNoteplaying = false;
+    private static boolean isRecording;
+    private static MediaRecorder voiceRecorder;
     private Runnable timerRunnable;
     private Handler seekHandler = new Handler();
     private View dirtyView;
@@ -171,7 +176,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     private static String mediaFilePath;
     private long firstMessageID =0L;
     private int requestCode = 0;
-    private  LinearLayoutManager linearLayoutManager;
+    private LinearLayoutManager linearLayoutManager;
     private MediaPlayer player;
     private StickyHeaderDecoration decor;
     private TextView toolbarTitle,toolbarSubTitle;
@@ -212,7 +217,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
         setupFields();
         setCCTheme();
         processIntentData(getIntent());
-        if(isCloseWindowEnabled){
+        if(!setBackButton){
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             toolbar.setNavigationIcon(R.drawable.cc_ic_action_cancel);
         }
@@ -234,8 +239,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
             getSupportLoaderManager().restartLoader(MESSAGE_LOADER, null, this);
         }
 
+        sendStatusPingMessage();
         newMessageCount = 0;
-
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -362,7 +367,18 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
         txtViewCaptureVideo = (TextView) findViewById(R.id.textCaptureVideo);
         txtLoadEarlierMessages = (TextView) findViewById(R.id.txt_load_earlier_messages);
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
-        voiceNotebtn.setBackgroundResource(R.drawable.ic_mic_6);
+        if(isRecording){
+            messageField.setEnabled(false);
+            btnChatMenuSmiliey.setEnabled(false);
+            voiceNotebtn.setBackgroundResource(R.drawable.ic_mic);
+            AnimationDrawable animationDrawable = (AnimationDrawable) voiceNotebtn.getBackground();
+            voiceNotebtn.getBackground().setColorFilter(colorPrimary, PorterDuff.Mode.SRC_ATOP);
+            animationDrawable.start();
+        }else {
+            messageField.setEnabled(true);
+            btnChatMenuSmiliey.setEnabled(true);
+            voiceNotebtn.setBackgroundResource(R.drawable.ic_mic_6);
+        }
         toolbarTitle = (TextView) findViewById(R.id.title);
         toolbarSubTitle = (TextView) findViewById(R.id.subTitle);
         toolbarSubTitle.setSelected(true);
@@ -560,6 +576,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
         } else{
             btnAVBroadcast.setVisibility(View.GONE);
         }
+        txtLoadEarlierMessages.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_LOAD_EARLIER)));
     }
 
     private void makeVoiceNoteButtonVisible() {
@@ -638,7 +655,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
 
         Logger.error(TAG,"has CLOSE_WINDOW_ENABLED ? "+intent.hasExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED));
         if(intent.hasExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED)){
-            isCloseWindowEnabled = intent.getBooleanExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED,false);
+            setBackButton = intent.getBooleanExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED,true);
         }
 
         if (intent.hasExtra(BroadCastReceiverKeys.IntentExtrasKeys.CONTACT_NAME)) {
@@ -774,7 +791,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
         int id = item.getItemId();
 
         if (id == android.R.id.home) {
-            if(isCloseWindowEnabled){
+             if(!setBackButton){
                 MessageSDK.closeCometChatWindow(CCSingleChatActivity.this, ccContainer);
                 cometChat.sendCloseCCWindowResponce();
             }else{
@@ -893,7 +910,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     @SuppressLint("HandlerLeak")
     private void initiateCall(final boolean isAudioOnlyCall) {
         if(isAudioOnlyCall){
-
+//            FlurryAgent.logEvent("Audio Call");
+            CCAnalyticsHelper.logFeatureEvent("Audio Call");
             cometChat.sendAudioChatRequest(String.valueOf(contactId), new Callbacks() {
                 @Override
                 public void successCallback(JSONObject jsonObject) {
@@ -916,6 +934,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
                 }
         });
         }else{
+//            FlurryAgent.logEvent("Video Call");
+            CCAnalyticsHelper.logFeatureEvent("Video Call");
             cometChat.sendAVChatRequest(String.valueOf(contactId), new Callbacks() {
                 @Override
                 public void successCallback(JSONObject jsonObject) {
@@ -942,6 +962,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     @Override
     protected void onResume() {
         super.onResume();
+        Logger.error(TAG, "onResume: isRecording: "+isRecording);
         if (requestCode == 0) {
             if (getSupportLoaderManager().getLoader(MESSAGE_LOADER) != null) {
                 getSupportLoaderManager().restartLoader(MESSAGE_LOADER, null, this);
@@ -949,6 +970,12 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
         }
         requestCode = 0;
         PreferenceHelper.save(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID, contactId);
+    }
+
+    @Override
+    public void  onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        Logger.error(TAG, "onConfigurationChanged: isRecording: "+isRecording);
     }
 
     @Override
@@ -1416,12 +1443,13 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
         tvViewProfile.setText(cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_VIEW_PROFILE)).toString());
         tvClearConversation.setText(cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_CLEAR_CONVERSATION)).toString());
         tvReportConversation.setText(cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_REPORT_CONVERSATION)).toString());
-        //tvBlockuser.setText(cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_BLOCK_USER)).toString());
+        tvBlockuser.setText(cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_BLOCK_USER)).toString());
 
         viewProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showPopup.dismiss();
+                CCAnalyticsHelper.logFeatureEvent("View Profile");
                 Intent i = new Intent(getApplicationContext(), CCViewUserProfileActivity.class);
                 i.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CONTACT_ID, contactId);
                 startActivity(i);
@@ -1433,6 +1461,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
                 @Override
                 public void onClick(View v) {
                     showPopup.dismiss();
+                    CCAnalyticsHelper.logFeatureEvent("Clear Conversation");
                     if(clearConversationState == FeatureState.INACCESSIBLE){
                         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCSingleChatActivity.this);
                         alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -1453,6 +1482,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
                 @Override
                 public void onClick(View v) {
                     showPopup.dismiss();
+                    CCAnalyticsHelper.logFeatureEvent("Report Conversation");
                     if (reportConversationState == FeatureState.INACCESSIBLE) {
                         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCSingleChatActivity.this);
                         alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -1473,6 +1503,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
                 @Override
                 public void onClick(View v) {
                     showPopup.dismiss();
+                    CCAnalyticsHelper.logFeatureEvent("Block User");
                     if (blockUserState == FeatureState.INACCESSIBLE) {
                         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCSingleChatActivity.this);
                         alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -1503,11 +1534,15 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     private void openCaptureMediaBottomSheet() {
         dirtyView.setVisibility(View.VISIBLE);
         hideSoftKeyboard(CCSingleChatActivity.this);
+        if(smiliKeyBoard.isKeyboardVisibile()){
+            smiliKeyBoard.dismissKeyboard();
+        }
         sheetCameraBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         AnimateBottomSheetViews();
     }
 
     private void loadChatHistory(){
+        final String noMoreMessages = (String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_NO_MORE_MESSAGES));
         cometChat.getChatHistory(contactId,firstMessageID, new Callbacks() {
             @Override
             public void successCallback(JSONObject jsonObject) {
@@ -1533,7 +1568,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
                             @Override
                             public void run() {
                                 refreshLayout.setRefreshing(false);
-                                Toast.makeText(CCSingleChatActivity.this, "No More Messages", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(CCSingleChatActivity.this, noMoreMessages, Toast.LENGTH_SHORT).show();
                             }
                         });
                     }
@@ -1544,7 +1579,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
                         @Override
                         public void run() {
                             refreshLayout.setRefreshing(false);
-                            Toast.makeText(CCSingleChatActivity.this, "No More Messages", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(CCSingleChatActivity.this, noMoreMessages, Toast.LENGTH_SHORT).show();
                         }
                     });
                     e.printStackTrace();
@@ -1581,6 +1616,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void startHandwrite() {
+//        FlurryAgent.logEvent("Handwrite Message");
+        CCAnalyticsHelper.logFeatureEvent("Handwrite Message");
         Intent i = new Intent(getApplicationContext(), CCHandwriteActivity.class);
         i.putExtra(CometChatKeys.AjaxKeys.SENDERNAME, contactName);
         i.putExtra(CometChatKeys.AjaxKeys.BASE_DATA, PreferenceHelper.get(PreferenceKeys.DataKeys.BASE_DATA));
@@ -1589,6 +1626,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void startWriteBoard() {
+//        FlurryAgent.logEvent("Collaborative Document");
+        CCAnalyticsHelper.logFeatureEvent("Collaborative Document");
         cometChat.sendWriteBoardRequest(String.valueOf(contactId),false, new Callbacks() {
             @Override
             public void successCallback(JSONObject jsonObject) {
@@ -1613,7 +1652,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
 
     private void startAvBroadcast(){
         Logger.error(TAG,"Start AV broadcast called");
-
+//        FlurryAgent.logEvent("AV Broadcast Started");
+        CCAnalyticsHelper.logFeatureEvent("AV Broadcast Started");
         cometChat.sendAVBroadcastRequest(String.valueOf(contactId), new Callbacks() {
             @Override
             public void successCallback(JSONObject jsonObject) {
@@ -1639,6 +1679,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void startWhiteBoard() {
+//        FlurryAgent.logEvent("WhiteBoard");
+        CCAnalyticsHelper.logFeatureEvent("WhiteBoard");
         cometChat.sendWhiteBoardRequest(String.valueOf(contactId),false, new Callbacks() {
             @Override
             public void successCallback(JSONObject jsonObject) {
@@ -2240,6 +2282,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void sendTextMessage(final OneOnOneMessage mess) {
+//        FlurryAgent.logEvent("Text Message");
+        CCAnalyticsHelper.logFeatureEvent("Text Message");
         cometChat.sendMessage(mess.getId(), String.valueOf(contactId), mess.message,false, new Callbacks() {
             @Override
             public void successCallback(JSONObject sendResponse) {
@@ -2259,7 +2303,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
                         mess.remoteId = id;
                         mess.sentTimestamp = timestamp * 1000;
                         mess.messageStatus = 1;
-                        //mess.message = String.valueOf(Html.fromHtml(messageAfterSuccess));
+                        mess.message = String.valueOf(Html.fromHtml(messageAfterSuccess));
                         if(cometChat.isMessageinPendingDeliveredList(String.valueOf(id))){
                             mess.messagetick = CometChatKeys.MessageTypeKeys.MESSAGE_DELIVERD;
                         }else {
@@ -2301,6 +2345,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
 
     private void sendImageMessage(String imagePath) {
         Logger.error(TAG,"sendImageMessage(): imagePath: "+imagePath);
+//        FlurryAgent.logEvent("Image Message");
+        CCAnalyticsHelper.logFeatureEvent("Image Message");
         OneOnOneMessage message = createNewOneOnOneMessage(MessageTypeKeys.IMAGE_MESSAGE, imagePath);
         addMessage(message);
 
@@ -2408,6 +2454,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void sendSticker(OneOnOneMessage message) {
+//        FlurryAgent.logEvent("Sticker");
+        CCAnalyticsHelper.logFeatureEvent("Sticker Message");
         cometChat.sendSticker(message.getId(),message.message, String.valueOf(contactId),false, new Callbacks() {
             @Override
             public void successCallback(JSONObject sendResponse) {
@@ -2447,6 +2495,8 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void sendVideo(OneOnOneMessage message) {
+//        FlurryAgent.logEvent("Video Message");
+        CCAnalyticsHelper.logFeatureEvent("Video Message");
         cometChat.sendVideo(message.getId(),message.message,String.valueOf(contactId),false,new Callbacks() {
             @Override
             public void successCallback(JSONObject sendResponse) {
@@ -2496,6 +2546,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void sendAudioNote(final OneOnOneMessage message) {
+        Logger.error(TAG, "sendAudioNote: contactId: "+contactId);
         cometChat.sendAudioFile(message.getId(),new File(message.message),String.valueOf(contactId),false, new Callbacks() {
             @Override
             public void successCallback(JSONObject sendResponse) {
@@ -2675,7 +2726,7 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
     public void onBackPressed() {
         if(smiliKeyBoard.isKeyboardVisibile()){
             smiliKeyBoard.dismissKeyboard();
-        }else if(isCloseWindowEnabled) {
+        }else if(!setBackButton) {
             cometChat.sendCloseCCWindowResponce();
             MessageSDK.closeCometChatWindow(CCSingleChatActivity.this, ccContainer);
         }else{
@@ -2767,5 +2818,20 @@ public class CCSingleChatActivity extends AppCompatActivity implements View.OnCl
         }else {
             Logger.error(TAG, "onRetryClicked: message not present in database");
         }
+    }
+
+
+    private void sendStatusPingMessage(){
+        cometChat.sendStatusPing(Status.online,contact.cometid, new Callbacks() {
+            @Override
+            public void successCallback(JSONObject jsonObject) {
+                Logger.error(TAG,"Statusn ping success = "+jsonObject);
+            }
+
+            @Override
+            public void failCallback(JSONObject jsonObject) {
+                Logger.error(TAG,"Statusn ping fail = "+jsonObject);
+            }
+        });
     }
 }

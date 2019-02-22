@@ -32,6 +32,7 @@ import cometchat.inscripts.com.readyui.R;
 import fragments.RecentFragment;
 import models.Contact;
 import models.Conversation;
+import models.Groups;
 
 public class RecentListAdapter extends RecyclerViewCursorAdapter<RecentListAdapter.RecentItemHolder> {
 
@@ -57,7 +58,11 @@ public class RecentListAdapter extends RecyclerViewCursorAdapter<RecentListAdapt
     @Override
     public void onBindViewHolder(final RecentItemHolder holder, Cursor cursor) {
         final boolean isChatroom = cursor.getLong(cursor.getColumnIndex(Conversation.COLUMN_CHATROOM_ID)) != 0;
-
+        long chatroomId = 0;
+        if(isChatroom){
+            chatroomId = cursor.getLong(cursor.getColumnIndex(Conversation.COLUMN_CHATROOM_ID));
+            Logger.error(TAG, "onBindViewHolder: chatroomId: "+chatroomId);
+        }
         CharSequence userName = "";
         if (cursor.getString(cursor.getColumnIndex(Conversation.COLUMN_NAME)) != null) {
             userName = Html.fromHtml(cursor.getString(cursor.getColumnIndex(Conversation.COLUMN_NAME)));
@@ -92,6 +97,12 @@ public class RecentListAdapter extends RecyclerViewCursorAdapter<RecentListAdapt
             holder.chatroomAvtar.setVisibility(View.VISIBLE);
             holder.chatroomAvtar.setImageResource(R.drawable.cc_ic_group);
             holder.chatroomAvtar.getBackground().setColorFilter(colorPrimary, PorterDuff.Mode.SRC_ATOP);
+            Groups groups = Groups.getGroupDetails(chatroomId);
+            if (groups != null && groups.type == 1) {
+                holder.imgLock.setVisibility(View.VISIBLE);
+            }else {
+                holder.imgLock.setVisibility(View.GONE);
+            }
         } else {
             holder.avatar.setVisibility(View.VISIBLE);
             holder.chatroomAvtar.setVisibility(View.GONE);
@@ -131,6 +142,7 @@ public class RecentListAdapter extends RecyclerViewCursorAdapter<RecentListAdapt
         public RoundedImageView avatar;
         public ImageView chatroomAvtar;
         public ImageView statusImage;
+        public ImageView imgLock;
         public View view;
 
         public RecentItemHolder(View view) {
@@ -142,6 +154,7 @@ public class RecentListAdapter extends RecyclerViewCursorAdapter<RecentListAdapt
             statusImage = (ImageView) view.findViewById(R.id.imageViewStatusIcon);
             unreadCount = (TextView) view.findViewById(R.id.textviewSingleChatUnreadCount);
             userLastMessage = (EmojiTextView) view.findViewById(R.id.textviewLastMessage);
+            imgLock = view.findViewById(R.id.imgLock);
             this.view = view;
         }
     }

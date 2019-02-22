@@ -716,7 +716,7 @@ public class GroupMessageAdapter extends RecyclerViewCursorAdapter<RecyclerView.
                                 Element imageElement = doc.select("img").first();
                                 final String absoluteUrl = imageElement.absUrl("src");
                                 botMessageHolder.imageMessage.setVisibility(View.VISIBLE);
-                                LocalStorageFactory.loadImage(context, absoluteUrl, botMessageHolder.imageMessage, R.drawable.ic_broken_image);
+                                LocalStorageFactory.loadImageUsingURL(context, absoluteUrl, botMessageHolder.imageMessage, R.drawable.ic_broken_image);
                                 botMessageHolder.imageTitle.setVisibility(View.GONE);
                                 botMessageHolder.imageMessage.setOnClickListener(new View.OnClickListener() {
 

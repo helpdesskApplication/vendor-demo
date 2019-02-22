@@ -64,6 +64,7 @@ public class CCNotificationHelper {
     private static Context context;
     public static final String MESSAGE = "m";
     public static final String DATA = "com.parse.Data";
+    public static final String NEW_DATA = "cc.notification.Data";
     public static final String AV_CHAT = "avchat";
     public static final String FROM_ID = "fid";
     public static final String IS_CHATROOM = "isCR";
@@ -79,7 +80,7 @@ public class CCNotificationHelper {
     private static CometChat cometChat;
     private static FeatureState grpState;
     private static HashMap<Integer,ArrayList<String>> notifications = new HashMap<>();
-     public static void processCCNotificationData(Context c , RemoteMessage remoteMessage , boolean closeWindow ,int LI , int LSI){
+     public static void processCCNotificationData(Context c , RemoteMessage remoteMessage , boolean closeWindow ,int LI , int LSI)  {
         context = c;
         PreferenceHelper.initialize(context);
         initializeSessionData();
@@ -128,71 +129,24 @@ public class CCNotificationHelper {
                 JSONObject messageJson = new JSONObject(titleText.get("m"));
                 String type = titleText.get(TYPE);
                 String alert = titleText.get(ALERT);
-
-                /*if (titleText.containsKey("isCR")
-                        && titleText.get("isCR") == "1") {*/
-
-                Logger.error(TAG, "type : " + type);
-                Logger.error(TAG, "alert : " + alert);
                 if (type.equals("C")){
-                    /*if (null != PreferenceHelper.get(PreferenceKeys.DataKeys.CURRENT_CHATROOM_ID) && !"0".equals(PreferenceHelper.get(PreferenceKeys.DataKeys.CURRENT_CHATROOM_ID))) {
-                        // You're a part of a chatroom
-                        if (!PreferenceHelper.get(PreferenceKeys.UserKeys.USER_ID).equals(messageJson.getString(FROM_ID))
-                                && ("0".equals(PreferenceHelper.get(PreferenceKeys.DataKeys.ACTIVE_CHATROOM_ID))
-                                || !(messageJson.getString("cid").equals(PreferenceHelper.get(PreferenceKeys.DataKeys.ACTIVE_CHATROOM_ID))))) {
-                            intent.putExtra(DATA,jsonData.toString());
-                            if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1")){
-                                showNotification(alert, intent);
-                            }
-                        }
-                    }*/
-                    Logger.error(TAG, "processCCNotificationData: isSelf"+PreferenceHelper.get(PreferenceKeys.UserKeys.USER_ID).equals(messageJson.getString(FROM_ID)));
-                    Logger.error(TAG, "processCCNotificationData: groupWindowId: "+(PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID) == null ||
-                            !PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID).equals(messageJson.getString("cid"))));
-                    Logger.error(TAG, "processCCNotificationData: cid: "+messageJson.getString("cid"));
-                    Logger.error(TAG, "processCCNotificationData: windowId: "+PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID));
                     if(!PreferenceHelper.get(PreferenceKeys.UserKeys.USER_ID).equals(messageJson.getString(FROM_ID))&&(PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID) == null || !PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID).equals(messageJson.getString("cid")))){
                         if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1")){
                             if(jsonData.has("alert") && !jsonData.getString("alert").contains("CC^CONTROL_PLUGIN_")){
                                 intent.putExtra(DATA,jsonData.toString());
-//                                if (grpState == FeatureState.ACCESSIBLE) {
-                                    /*ArrayList<String> temp = notifications.get(Integer.parseInt(messageJson.getString("cid")));
-                                    if(temp == null){
-                                        temp = new ArrayList<>();
-                                        temp.add(alert);
-                                    }else {
-                                        temp.add(alert);
-                                    }
-                                    notifications.put(Integer.parseInt(messageJson.getString("cid")), temp);*/
                                     NotificationDataHelper.addToMap(Integer.parseInt(messageJson.getString("cid")),alert);
-//                                    showNotification(alert, intent,Integer.parseInt(messageJson.getString("cid")));
                                     processAndDisplayNotifications(alert, intent, Integer.parseInt(messageJson.getString("cid")), true);
-//                                }
+
                             }
                         }
                     }
                 } else if (titleText.containsKey("isANN")) {
-                    /*if (jp != null && null != jp.getLang()) {
-                        intent.putExtra(NotificationHelper.PushNotificationKeys.DATA,jsonData.toString());
-                        showNotification( alert, intent);
-                    } else {
-                        intent.putExtra(NotificationHelper.PushNotificationKeys.DATA,jsonData.toString());
-                        showNotification(alert, intent);
-                    }*/
                     intent.putExtra(DATA,jsonData.toString());
                     if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1")){
-//                        showNotification(alert, intent,0);
                         processAndDisplayNotifications(alert, intent, 0, false);
                     }
                 } else {
                     Long buddyId = messageJson.getLong(FROM_ID);
-                    Logger.error(TAG, "buddyId : " + buddyId);
-                    Logger.error(TAG, "type : " + type);
-                    Logger.error(TAG, "PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID) : "
-                            + PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID));
-                    //if (PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID)) {
-                        // if we are chatting with someone
-
                     long buddyWindowId = 0;
                     if (PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID)) {
                         buddyWindowId = Long.parseLong(PreferenceHelper
@@ -242,11 +196,6 @@ public class CCNotificationHelper {
                                                     endCancelIntent.putExtra(BroadCastReceiverKeys.AvchatKeys.CALL_END_FROM_NOTIFICATION, 1);
                                                     context.sendBroadcast(endCancelIntent);
                                                 }else if (avmessage == null) {
-                                                    /*final OneOnOneMessage mess = new OneOnOneMessage(messageid, buddyId,
-                                                            Long.parseLong(PreferenceHelper.get(PreferenceKeys.UserKeys.USER_ID)), messageJson.getString("m"), System.currentTimeMillis(), 1, 1,
-                                                            CometChatKeys.MessageTypeKeys.AVCHAT, "", 1, CometChatKeys.MessageTypeKeys.MESSAGE_SENT, 1);
-                                                    mess.save();*/
-
                                                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                                     i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
                                                     i.putExtra(CometChatKeys.AVchatKeys.CALLER_ID, String.valueOf(buddyId));
@@ -269,7 +218,6 @@ public class CCNotificationHelper {
                                     intent.putExtra(DATA,jsonData.toString());
                                     if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1")){
                                         NotificationDataHelper.addToMap(Integer.parseInt(String.valueOf(buddyId)),alert);
-//                                        showNotification(alert, intent,Integer.parseInt(String.valueOf(buddyId)));
                                         processAndDisplayNotifications(alert, intent, Integer.parseInt(String.valueOf(buddyId)), false);
                                     }
                                 }
@@ -281,7 +229,6 @@ public class CCNotificationHelper {
 
                                 !PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID)){
                             NotificationDataHelper.addToMap(Integer.parseInt(String.valueOf(buddyId)),alert);
-//                            showNotification(alert, intent,Integer.parseInt(String.valueOf(buddyId)));
                             processAndDisplayNotifications(alert, intent, Integer.parseInt(String.valueOf(buddyId)), false);
                         }
                     }
@@ -532,68 +479,29 @@ public class CCNotificationHelper {
                 JSONObject messageJson = new JSONObject(titleText.get("m"));
                 String type = titleText.get(TYPE);
                 String alert = titleText.get(ALERT);
-
-                /*if (titleText.containsKey("isCR")
-                        && titleText.get("isCR") == "1") {*/
-
-                Logger.error(TAG, "type : " + type);
-                Logger.error(TAG, "alert : " + alert);
                 if (type.equals("C")){
-                    /*if (null != PreferenceHelper.get(PreferenceKeys.DataKeys.CURRENT_CHATROOM_ID) && !"0".equals(PreferenceHelper.get(PreferenceKeys.DataKeys.CURRENT_CHATROOM_ID))) {
-                        // You're a part of a chatroom
-                        if (!PreferenceHelper.get(PreferenceKeys.UserKeys.USER_ID).equals(messageJson.getString(FROM_ID))
-                                && ("0".equals(PreferenceHelper.get(PreferenceKeys.DataKeys.ACTIVE_CHATROOM_ID))
-                                || !(messageJson.getString("cid").equals(PreferenceHelper.get(PreferenceKeys.DataKeys.ACTIVE_CHATROOM_ID))))) {
-                            intent.putExtra(DATA,jsonData.toString());
-                            if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1")){
-                                showNotification(alert, intent);
-                            }
-                        }
-                    }*/
-                    Logger.error(TAG, "processCCNotificationData: isSelf"+PreferenceHelper.get(PreferenceKeys.UserKeys.USER_ID).equals(messageJson.getString(FROM_ID)));
-                    Logger.error(TAG, "processCCNotificationData: groupWindowId: "+(PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID) == null ||
-                            !PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID).equals(messageJson.getString("cid"))));
-                    Logger.error(TAG, "processCCNotificationData: cid: "+messageJson.getString("cid"));
-                    Logger.error(TAG, "processCCNotificationData: windowId: "+PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID));
                     if(!PreferenceHelper.get(PreferenceKeys.UserKeys.USER_ID).equals(messageJson.getString(FROM_ID))&&(PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID) == null || !PreferenceHelper.get(JsonParsingKeys.GRP_WINDOW_ID).equals(messageJson.getString("cid")))){
                         if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1")){
                             if(jsonData.has("alert") && !jsonData.getString("alert").contains("CC^CONTROL_PLUGIN_")){
-                                intent.putExtra(DATA,jsonData.toString());
+                                intent.putExtra(NEW_DATA,jsonData.toString());
                                 if (grpState == FeatureState.ACCESSIBLE) {
-//                                    showNotification(alert, intent);
                                     processAndDisplayNotifications(alert, intent, Integer.parseInt(messageJson.getString("cid")), true);
                                 }
                             }
                         }
                     }
                 } else if (titleText.containsKey("isANN")) {
-                    /*if (jp != null && null != jp.getLang()) {
-                        intent.putExtra(NotificationHelper.PushNotificationKeys.DATA,jsonData.toString());
-                        showNotification( alert, intent);
-                    } else {
-                        intent.putExtra(NotificationHelper.PushNotificationKeys.DATA,jsonData.toString());
-                        showNotification(alert, intent);
-                    }*/
-                    intent.putExtra(DATA,jsonData.toString());
+                    intent.putExtra(NEW_DATA,jsonData.toString());
                     if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1")){
-//                        showNotification(alert, intent);
                         processAndDisplayNotifications(alert, intent, 0, false);
                     }
                 } else {
                     Long buddyId = messageJson.getLong(FROM_ID);
-                    Logger.error(TAG, "buddyId : " + buddyId);
-                    Logger.error(TAG, "type : " + type);
-                    Logger.error(TAG, "PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID) : "
-                            + PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID));
-                    //if (PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID)) {
-                        // if we are chatting with someone
-
                     long buddyWindowId = 0;
                     if (PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID)) {
                         buddyWindowId = Long.parseLong(PreferenceHelper
                                 .get(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID));
                     }
-                        Logger.error(TAG,"Message Json has ? "+messageJson.has("m"));
                         if (messageJson.has("m")) {
 
                             if (type.contains("O_A")) {
@@ -616,7 +524,6 @@ public class CCNotificationHelper {
                                     session.setAvChatRoomName(originalRoomname);
                                     session.setActiveAVchatUserID(String.valueOf(buddyId));
                                 }
-                                Logger.error(TAG,"MessageJsom = "+messageJson);
                                 if (messageJson.has("sent")) {
                                     Long time = messageJson.getLong("sent") * 1000;
                                     if ((System.currentTimeMillis() - time) < 60000) {
@@ -637,11 +544,6 @@ public class CCNotificationHelper {
                                                     endCancelIntent.putExtra(BroadCastReceiverKeys.AvchatKeys.CALL_END_FROM_NOTIFICATION, 1);
                                                     context.sendBroadcast(endCancelIntent);
                                                 }else if (avmessage == null) {
-                                                    /*final OneOnOneMessage mess = new OneOnOneMessage(messageid, buddyId,
-                                                            Long.parseLong(PreferenceHelper.get(PreferenceKeys.UserKeys.USER_ID)), messageJson.getString("m"), System.currentTimeMillis(), 1, 1,
-                                                            CometChatKeys.MessageTypeKeys.AVCHAT, "", 1, CometChatKeys.MessageTypeKeys.MESSAGE_SENT, 1);
-                                                    mess.save();*/
-
                                                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                                     i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
                                                     i.putExtra(CometChatKeys.AVchatKeys.CALLER_ID, String.valueOf(buddyId));
@@ -660,20 +562,17 @@ public class CCNotificationHelper {
 
                             } else {
                                 if (buddyWindowId != buddyId || buddyWindowId == 0) {
-                                    intent.putExtra(DATA,jsonData.toString());
+                                    intent.putExtra(NEW_DATA,jsonData.toString());
                                     if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1")){
-//                                        showNotification(alert, intent);
                                         processAndDisplayNotifications(alert, intent, Integer.parseInt(String.valueOf(buddyId)), false);
                                     }
                                 }
                             }
 
                     }else{
-                        intent.putExtra(DATA, jsonData.toString());
+                        intent.putExtra(NEW_DATA, jsonData.toString());
                         if(PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_ON).equals("1") &&
-
                             !PreferenceHelper.contains(PreferenceKeys.DataKeys.ACTIVE_BUDDY_ID)){
-//                            showNotification(alert, intent);
                             processAndDisplayNotifications(alert, intent, Integer.parseInt(String.valueOf(buddyId)), false);
                         }
                     }
@@ -681,180 +580,10 @@ public class CCNotificationHelper {
             }
 
         }catch (Exception e){
-            //Logger.error("In firebase exception");
             e.printStackTrace();
 
         }
     }
-
-    /*private static void showNotification(String notificationText, Intent resultIntent){
-        Logger.error(TAG,"Notification text = "+String.valueOf(Html.fromHtml(notificationText)));
-        String formattedNotificationText = String.valueOf(Html.fromHtml(notificationText));
-        String appName = context.getString(context.getApplicationInfo().labelRes);
-
-        boolean isSoundActive = PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_SOUND).equals("1");
-        boolean isVibrateActive = PreferenceHelper.get(PreferenceKeys.UserKeys.NOTIFICATION_VIBRATE).equals("1");
-
-        boolean isUsingSystemSound = true;
-
-        String storedNotificationStack = PreferenceHelper.get(PreferenceKeys.DataKeys.NOTIFICATION_STACK);
-        if (TextUtils.isEmpty(storedNotificationStack)) {
-            storedNotificationStack = notificationText;
-        } else {
-            storedNotificationStack = storedNotificationStack + DELIMITER + notificationText;
-        }
-
-        PreferenceHelper.save(PreferenceKeys.DataKeys.NOTIFICATION_STACK, storedNotificationStack);
-        String[] allNotifications = storedNotificationStack.split(DELIMITER);
-
-        String summaryText, contentText;
-        if (allNotifications.length == 1) {
-            summaryText = allNotifications.length + " new message";
-            contentText = notificationText;
-        } else {
-            contentText = summaryText = allNotifications.length + " new messages";
-        }
-
-        NotificationCompat.InboxStyle style = new NotificationCompat.InboxStyle().setSummaryText(summaryText)
-                .setBigContentTitle(appName);
-
-        boolean isSinglePerson = true;
-        boolean gotFirstValue = false;
-        String oldPart = "";
-
-        *//*for (int i = allNotifications.length - 1; i >= 0; i--) {
-
-            String notifi = allNotifications[i];
-            String latestPart = notifi.substring(0, notifi.indexOf(":"));
-
-            if (!gotFirstValue) {
-                oldPart = latestPart;
-                gotFirstValue = true;
-            }
-            if (!latestPart.contains("@") && !oldPart.equals(latestPart)) {
-                isSinglePerson = false;
-            }else if(latestPart.contains("@") && oldPart.contains("@")){
-                String old[] = oldPart.split("@");
-                String lates[] = oldPart.split("@");
-                if(!old[1].equals(lates[1])){
-                    isSinglePerson = false;
-                }
-            }
-
-            oldPart = latestPart;
-
-            // Adding the line to the notification
-            style.addLine(notifi);
-        }*//*
-        ArrayList<String> notificationList = NotificationDataHelper.getFromMap(notificationId);
-        for (int i = 0; i < notificationList.size(); i++) {
-                style.addLine(notificationList.get(i));
-        }
-        Logger.error(TAG,"isSinglePerson ? "+isSinglePerson);
-//        Intent resultIntent = new Intent();
-        if (isSinglePerson == false) {
-            resultIntent = new Intent();
-            resultIntent.setClass(context, CometChatActivity.class);
-        }
-
-        resultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        resultIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        resultIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-        PendingIntent pIntent = PendingIntent.getActivity(context, notificationId, resultIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
-        Logger.error(TAG,"Content text = "+contentText);
-        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context);
-        Notification summaryNotification = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            NotificationChannel mChannel;
-            String CHANNEL_ID = "";
-            CharSequence channelName = "";
-            int importance = 0;
-
-            if (isSoundActive && isVibrateActive) {
-                Logger.error(TAG, "showNotification() 1: isSoundActive "+isSoundActive+" isVibrateActive "+isVibrateActive );
-                CHANNEL_ID = "Notification Channel 1";
-                channelName = "Notification Channel 1";   // The user-visible name of the channel.
-                importance = NotificationManager.IMPORTANCE_DEFAULT ;
-            } else if (!isSoundActive && !isVibrateActive) {
-                Logger.error(TAG, "showNotification() 2: isSoundActive "+isSoundActive+" isVibrateActive "+isVibrateActive );
-                CHANNEL_ID = "Notification Channel 2";
-                channelName = "Notification Channel 2";   // The user-visible name of the channel.
-                importance = NotificationManager.IMPORTANCE_LOW ;
-            } else if (!isSoundActive && isVibrateActive) {
-                Logger.error(TAG, "showNotification() 3: isSoundActive "+isSoundActive+" isVibrateActive "+isVibrateActive );
-                CHANNEL_ID = "Notification Channel 3";
-                channelName = "Notification Channel 3";   // The user-visible name of the channel.
-                importance = NotificationManager.IMPORTANCE_DEFAULT ;
-            } else if (!isVibrateActive && isSoundActive) {
-                Logger.error(TAG, "showNotification() 4: isSoundActive "+isSoundActive+" isVibrateActive "+isVibrateActive );
-                CHANNEL_ID = "Notification Channel 4";
-                channelName = "Notification Channel 4";   // The user-visible name of the channel.
-                importance = NotificationManager.IMPORTANCE_DEFAULT ;
-            }
-
-            mChannel = new NotificationChannel(CHANNEL_ID, channelName, importance);
-            mChannel.setShowBadge(true);
-
-            if (isSoundActive) {
-                AudioAttributes attributes = new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                        .build();
-                mChannel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), attributes);
-            } else {
-                mChannel.setSound(null, null);
-            }
-
-            if (isVibrateActive) {
-                mChannel.enableVibration(true);
-            } else {
-                Logger.error(TAG, "showNotifications() : isVibrateActive : " + isVibrateActive);
-                mChannel.enableVibration(true);
-                mChannel.setVibrationPattern(new long[]{0});
-            }
-
-            notificationManager.createNotificationChannel(mChannel);
-            summaryNotification = mBuilder.setContentTitle(appName).setSmallIcon(launcherScmallIcon)
-                    .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), launcherIcon))
-                    .setContentText(formattedNotificationText).setContentIntent(pIntent)
-                    .setAutoCancel(true)
-                    .setStyle(style)
-                    .setColor(Color.parseColor("#002832"))
-                    .setChannelId(CHANNEL_ID)
-                    .build();
-        } else {
-            summaryNotification = mBuilder.setContentTitle(appName).setSmallIcon(launcherScmallIcon)
-                    .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), launcherIcon))
-                    .setContentText(formattedNotificationText).setContentIntent(pIntent)
-                    .setAutoCancel(true)
-                    .setStyle(style)
-                    .setColor(Color.parseColor("#002832"))
-                    .build();
-
-            if (isUsingSystemSound && isSoundActive) {
-                summaryNotification.defaults |= Notification.DEFAULT_SOUND;
-            }
-
-            if (isVibrateActive) {
-                summaryNotification.defaults |= Notification.DEFAULT_VIBRATE;
-            }
-        }
-
-        summaryNotification.flags |= Notification.FLAG_SHOW_LIGHTS;
-        summaryNotification.ledARGB = 0xff00ff00;
-        summaryNotification.ledOnMS = 300;
-        summaryNotification.ledOffMS = 2000;
-
-        if (android.os.Build.VERSION.SDK_INT >= 16) {
-            summaryNotification.priority = Notification.PRIORITY_MAX;
-        }
-
-        notificationManager.notify(notificationId, summaryNotification);
-    }*/
 
     public static void unsubscribe(boolean isChatroom,boolean isclearAll) {
         try {

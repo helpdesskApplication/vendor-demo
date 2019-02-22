@@ -416,8 +416,12 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                             View dialogview = getActivity().getLayoutInflater().inflate(R.layout.cc_custom_dialog, null);
                             TextView tvTitle = (TextView) dialogview.findViewById(R.id.textViewDialogueTitle);
                             tvTitle.setText("");
-                            new CustomAlertDialogHelper(getContext(), "Group Password", dialogview, "OK",
-                                    "", "Cancel", GroupFragment.this, 1,false);
+                            if (chatroom.status == 0) {
+                                new CustomAlertDialogHelper(getContext(), "Group Password", dialogview, "OK",
+                                        "", "Cancel", GroupFragment.this, 1,false);
+                            } else {
+                                joinGroup();
+                            }
                             break;
                         case CometChatKeys.ChatroomKeys.TypeKeys.INVITE_ONLY:
                             progressDialog = ProgressDialog.show(getContext(), "",(String)cometChatroom.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_JOINING_GROUP)));
@@ -543,6 +547,9 @@ public class GroupFragment extends Fragment implements LoaderManager.LoaderCallb
                             message = jsonObject.getString("s");
                         if (message.contains("BANNED")) {
                             message = "You have been banned from this group";
+                        }
+                        if (message.contains("INVALID_PASSWORD")) {
+                            message = "INVALID PASSWORD";
                         }
                     }
                 }catch (JSONException e){

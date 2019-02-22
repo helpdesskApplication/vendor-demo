@@ -112,6 +112,7 @@ public class CCStatusMessageActivity extends AppCompatActivity implements View.O
     }
 
     private void setupFieldValues() {
+
         tvCurrentStatusTitle.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_CURRENT_STATUS_TITLE)));
 
         tvNewStatusTitle.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_SELECT_NEW_STATUS)));

@@ -34,6 +34,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.flurry.android.FlurryAgent;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
@@ -65,7 +66,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,15 +84,20 @@ import customsviews.BadgeView;
 import fragments.ContactFragment;
 import fragments.GroupFragment;
 import fragments.RecentFragment;
+import helpers.CCAnalyticsHelper;
 import helpers.CCSubcribe;
+import helpers.ContactHelper;
 import helpers.CreditDeductionHelper;
 import helpers.NotificationDataHelper;
 import models.Contact;
 import models.Conversation;
 import models.Groups;
+import services.AddFriendsService;
 import videochat.CCIncomingCallActivity;
+import java.util.HashMap;
+import java.util.HashSet;
 
-public class CometChatActivity extends AppCompatActivity implements OnAlertDialogButtonClickListener {
+public class CometChatActivity extends AppCompatActivity implements OnAlertDialogButtonClickListener,RecentFragment.LongPressed {
 
     private static final java.lang.String TAG = CometChatActivity.class.getSimpleName();
     private ViewPager mViewPager;
@@ -112,17 +122,21 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
 
     private boolean recentEnabled;
     private boolean contactsEnabled;
-    private FeatureState groupsEnabled;
+    private FeatureState groupsEnabled,createGroup,createInviteGroup,createPublicGroup,createProtectedGroup,createPrivateGroup,inviteUsersToGroup;
 
     private int recentTabIndex, contactsTabIndex, groupsTabIndex;
     public final String DATA = "com.parse.Data";
     boolean isBound = false;
-    private boolean closeWindowEnable;
+    private boolean setBackButton;
     private View dialogView;
     private CreditDeductionHelper cdHelper;
     private FeatureState groupState,broadcastMessageState;
     private Gson gson;
-
+    private HashSet<String> phoneNumberSet = new HashSet<>();
+    private String commaSeperatedContactsString;
+    private Menu menu;
+    private HashSet<Integer> longPressedContactIds;
+    private HashSet<Integer> longPressedGroupIds;
     @Override
     protected void onStop() {
         super.onStop();
@@ -135,6 +149,8 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comet_chat);
         PreferenceHelper.initialize(this);
+//        FlurryAgent.logEvent("CometchatActivity");
+        CCAnalyticsHelper.logFeatureEvent("CometChatActivity");
         if(PreferenceHelper.contains(PreferenceKeys.LoginKeys.LOGGED_IN)
                 && PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN).equals("1")) {
 
@@ -158,7 +174,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
             }
             setupTabs();
             setCCTheme();
-            CCSubcribe.SubcribeToCometChat(this);
+            CCSubcribe.getInstance(this).SubcribeToCometChat();
             initializeSessionData();
             initializeFeatureStates();
             customReceiver = new BroadcastReceiver() {
@@ -182,18 +198,31 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
 
             cometChat.sendLaunchSuccess();
             PreferenceHelper.save(BroadCastReceiverKeys.AvchatKeys.CALL_SESSION_ONGOING, 0);
-
         } else {
             Toast.makeText(getApplicationContext(), "Please login to continue.", Toast.LENGTH_SHORT).show();
             MessageSDK.closeCometChatWindow(this, ccContainer);
         }
         Logger.error(TAG, "onCreate: "+System.currentTimeMillis() );
+
+        if (((boolean)cometChat.getCCSetting(new CCSettingMapper(SettingType.LOGIN_SETTINGS, SettingSubType.IS_PHONE_NUMBER_LOGIN)))) {
+            if (CCPermissionHelper.hasPermissions(getBaseContext(),CCPermissionHelper.REQUEST_PERMISSION_READ_CONTACTS)) {
+                commaSeperatedContactsString = "" + new ContactHelper(this).getContactList();
+                commaSeperatedContactsString = commaSeperatedContactsString.substring(1, commaSeperatedContactsString.length() - 1);
+                Logger.error(TAG, "onCreate: contacts: "+commaSeperatedContactsString );
+                Intent serviceIntent = new Intent();
+                serviceIntent.putExtra("CONTACT_LIST", commaSeperatedContactsString);
+                serviceIntent.putExtra("UID", PreferenceHelper.get("USERNAME"));
+                AddFriendsService.enqueWork(this,serviceIntent);
+            } else {
+                CCPermissionHelper.requestPermissions(CometChatActivity.this,new String[]{CCPermissionHelper.REQUEST_PERMISSION_READ_CONTACTS},CCPermissionHelper.PERMISSION_READ_CONTACTS);
+            }
+        }
     }
 
     private void initializeFeatureStates() {
-        groupState = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.CREATE_GROUPS_ENABLED));
+        groupState = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.GROUP_CHAT_ENABLED));
         broadcastMessageState = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.BROADCAST_MESSAGE_ENABLED));
-
+        createGroup = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE, SettingSubType.CREATE_GROUPS_ENABLED));
     }
 
     @Override
@@ -248,6 +277,10 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                     Toast.makeText(this, "PERMISSION NOT GRANTED.. SOME OF THE FEATURES MIGHT NOT WORK", Toast.LENGTH_SHORT).show();
                 }
                 break;
+            case CCPermissionHelper.PERMISSION_READ_CONTACTS:
+                if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "Permission for reading contacts is not granted", Toast.LENGTH_SHORT).show();
+                }
         }
     }
 
@@ -259,8 +292,8 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
         int id = 0;
         String groupUserId = mainIntent.getStringExtra("group_user_id");
         isGroup = mainIntent.getBooleanExtra("is_group", false);
-        closeWindowEnable = mainIntent.getBooleanExtra("close_window",false);
-        Logger.error(TAG,"closeWindowEnable ? "+closeWindowEnable);
+        setBackButton = mainIntent.getBooleanExtra("set_back_button_enable",true);
+        Logger.error(TAG,"closeWindowEnable ? "+setBackButton);
         if(mainIntent.hasExtra("notificationId")){
             id = mainIntent.getIntExtra("notificationId", 0);
             NotificationDataHelper.deleteFromMap(id);
@@ -318,7 +351,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                                     BroadCastReceiverKeys.ListUpdatationKeys.REFRESH_FULL_CHATROOM_LIST_FRAGMENT, 1);
                             context.sendBroadcast(intent);
 
-                            if(closeWindowEnable)
+                            if(!setBackButton)
                                 finish();
                         } else {
                             // Chatroom doesn't exist locally.
@@ -360,7 +393,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                             singleChatIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.BUDDY_ID, buddyId);
                             singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.BUDDY_NAME, notificationMessage);
-                            singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, closeWindowEnable);
+                            singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, setBackButton);
                             context.startActivity(singleChatIntent);
 
                             Intent intent = new Intent(
@@ -471,7 +504,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                                 singleChatIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CONTACT_ID, buddyId);
                                 singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CONTACT_NAME, CommonUtils.ucWords(notificationMessage[0]));
-                                singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, closeWindowEnable);
+                                singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, setBackButton);
                                 startActivity(singleChatIntent);
 
                     Intent intent = new Intent(
@@ -479,18 +512,19 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                     intent.putExtra(BroadCastReceiverKeys.ListUpdatationKeys.REFRESH_BUDDY_LIST_FRAGMENT, 1);
                     context.sendBroadcast(intent);
 
-                                Intent iintent = new Intent(BroadCastReceiverKeys.HeartbeatKeys.ANNOUNCEMENT_BADGE_UPDATION);
-                                iintent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.NEW_MESSAGE, 1);
-                                context.sendBroadcast(iintent);
-                                SessionData.getInstance().setChatbadgeMissed(true);
-            if(closeWindowEnable)
-                                    finish();                }else{
-                                cometChat.getUserInfo(String.valueOf(buddyId), new Callbacks() {
-                                    @Override
-                                    public void successCallback(JSONObject jsonObject) {
-                                        Contact contactnew = Contact.insertNewBuddy(jsonObject);
-                                        contactnew.unreadCount = 0;
-                                        contactnew.save();
+                    Intent iintent = new Intent(BroadCastReceiverKeys.HeartbeatKeys.ANNOUNCEMENT_BADGE_UPDATION);
+                    iintent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.NEW_MESSAGE, 1);
+                    context.sendBroadcast(iintent);
+                    SessionData.getInstance().setChatbadgeMissed(true);
+                    if (!setBackButton)
+                        finish();
+                } else {
+                    cometChat.getUserInfo(String.valueOf(buddyId), new Callbacks() {
+                        @Override
+                        public void successCallback(JSONObject jsonObject) {
+                            Contact contactnew = Contact.insertNewBuddy(jsonObject);
+                            contactnew.unreadCount = 0;
+                            contactnew.save();
 
                             Conversation conversation = Conversation.getConversationByBuddyID(String.valueOf(buddyId));
 
@@ -507,7 +541,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                             singleChatIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CONTACT_ID, buddyId);
                             singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CONTACT_NAME, notificationMessage[0]);
-                            singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, closeWindowEnable);
+                            singleChatIntent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, setBackButton);
                             context.startActivity(singleChatIntent);
 
                             Intent intent = new Intent(
@@ -519,8 +553,9 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                                         iintent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.NEW_MESSAGE, 1);
                                         context.sendBroadcast(iintent);
                                         SessionData.getInstance().setChatbadgeMissed(true);
-            if(closeWindowEnable)
-                                            finish();                        }
+                            if (!setBackButton)
+                                finish();
+                        }
 
                         @Override
                         public void failCallback(JSONObject jsonObject) {
@@ -565,7 +600,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
             intent.putExtra(BroadCastReceiverKeys.ListUpdatationKeys.REFRESH_FULL_CHATROOM_LIST_FRAGMENT, 1);
             context.sendBroadcast(intent);
 
-            if(closeWindowEnable)
+            if(!setBackButton)
                 finish();
         } else {
             // Chatroom doesn't exist locally.
@@ -584,7 +619,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                 chatroomName = groups.name;
                 openGroupChat(groupUserId);
             }
-            if(closeWindowEnable)
+            if(!setBackButton)
                 finish();
         }
     }
@@ -609,7 +644,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                 intent.putExtra("FileUri", PreferenceHelper.get(PreferenceKeys.DataKeys.SHARE_FILE_URL));
             }
             intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CONTACT_NAME, contact.name);
-            intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, closeWindowEnable);
+            intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, setBackButton);
             SessionData.getInstance().setTopFragment(StaticMembers.TOP_FRAGMENT_ONE_ON_ONE);
             startActivity(intent);
         }else{
@@ -641,7 +676,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                         intent.putExtra("FileUri", PreferenceHelper.get(PreferenceKeys.DataKeys.SHARE_FILE_URL));
                     }
                     intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CONTACT_NAME, contactnew.name);
-                    intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, closeWindowEnable);
+                    intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, setBackButton);
                     SessionData.getInstance().setTopFragment(StaticMembers.TOP_FRAGMENT_ONE_ON_ONE);
                     startActivity(intent);
                 }
@@ -671,7 +706,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
             if (PreferenceHelper.contains(PreferenceKeys.DataKeys.SHARE_AUDIO_URL)) {
                 intent.putExtra("AudioUri", PreferenceHelper.get(PreferenceKeys.DataKeys.SHARE_AUDIO_URL));
             }
-            intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, closeWindowEnable);
+            intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, setBackButton);
             CometChatActivity.this.startActivity(intent);
         }else{
             cometChat.getGroupInfo(groupUserId, new Callbacks() {
@@ -692,7 +727,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                     if (PreferenceHelper.contains(PreferenceKeys.DataKeys.SHARE_AUDIO_URL)) {
                         intent.putExtra("AudioUri", PreferenceHelper.get(PreferenceKeys.DataKeys.SHARE_AUDIO_URL));
                     }
-                    intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, closeWindowEnable);
+                    intent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED, setBackButton);
                     CometChatActivity.this.startActivity(intent);
                 }
 
@@ -709,7 +744,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         tabs = (TabLayout) findViewById(R.id.tabs);
         mViewPager = (ViewPager) findViewById(R.id.container);
-        adRelativeView = (RelativeLayout) findViewById(R.id.rel_adView);
+        adRelativeView = (RelativeLayout) findViewById(R.id.cc_rel_adView);
         if(LocalConfig.isApp && !TextUtils.isEmpty((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.AD_UNIT_ID)))){
             Logger.error(TAG,"AD_UNIT_ID : "+(String)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.AD_UNIT_ID)));
             adRelativeView.setVisibility(View.VISIBLE);
@@ -772,9 +807,9 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
         if(recentEnabled) {
             LinearLayout viewRecent = (LinearLayout) LayoutInflater
                     .from(CometChatActivity.this).inflate(R.layout.custom_tab, null);
-            TextView tvRecent = (TextView) viewRecent.findViewById(R.id.tv_tab_title);
+            TextView tvRecent = (TextView) viewRecent.findViewById(R.id.cc_tab_title);
             tvRecent.setTextColor(tabs.getTabTextColors());
-            BadgeView badgeViewRecent = (BadgeView) viewRecent.findViewById(R.id.batch_view);
+            BadgeView badgeViewRecent = (BadgeView) viewRecent.findViewById(R.id.cc_batch_view);
             badgeViewRecent.setVisibility(View.GONE);
             tvRecent.setText(recentTabText);
             tabs.getTabAt(recentTabIndex).setCustomView(viewRecent);
@@ -783,9 +818,9 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
         if(contactsEnabled) {
             LinearLayout viewContacts = (LinearLayout) LayoutInflater
                     .from(CometChatActivity.this).inflate(R.layout.custom_tab, null);
-            TextView tvContacts = (TextView) viewContacts.findViewById(R.id.tv_tab_title);
+            TextView tvContacts = (TextView) viewContacts.findViewById(R.id.cc_tab_title);
             tvContacts.setTextColor(tabs.getTabTextColors());
-            BadgeView badgeViewRecent = (BadgeView) viewContacts.findViewById(R.id.batch_view);
+            BadgeView badgeViewRecent = (BadgeView) viewContacts.findViewById(R.id.cc_batch_view);
             badgeViewRecent.setVisibility(View.GONE);
             tvContacts.setText(contactTabText);
             tabs.getTabAt(contactsTabIndex).setCustomView(viewContacts);
@@ -794,9 +829,9 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
         if(groupsEnabled != FeatureState.INVISIBLE) {
             LinearLayout viewGroups = (LinearLayout) LayoutInflater
                     .from(CometChatActivity.this).inflate(R.layout.custom_tab, null);
-            TextView tvGroups = (TextView) viewGroups.findViewById(R.id.tv_tab_title);
+            TextView tvGroups = (TextView) viewGroups.findViewById(R.id.cc_tab_title);
             tvGroups.setTextColor(tabs.getTabTextColors());
-            BadgeView badgeViewRecent = (BadgeView) viewGroups.findViewById(R.id.batch_view);
+            BadgeView badgeViewRecent = (BadgeView) viewGroups.findViewById(R.id.cc_batch_view);
             badgeViewRecent.setVisibility(View.GONE);
             tvGroups.setText(groupTabText);
             tabs.getTabAt(groupsTabIndex).setCustomView(viewGroups);
@@ -823,12 +858,20 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu = menu;
         getMenuInflater().inflate(R.menu.menu_cometchat, menu);
         if (groupState == FeatureState.INVISIBLE && broadcastMessageState == FeatureState.INVISIBLE){
            menu.findItem(R.id.custom_compose).setVisible(false);
         }
+        if ((longPressedContactIds != null && longPressedContactIds.size() > 0) || (longPressedGroupIds != null && longPressedGroupIds.size() > 0)) {
+            menu.findItem(R.id.delete_conversation).setVisible(true);
+        }else {
+            menu.findItem(R.id.delete_conversation).setVisible(false);
+        }
         return super.onCreateOptionsMenu(menu);
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -841,22 +884,31 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
             return true;
         } else if (id == R.id.custom_compose) {
             showCustomActionBarPopup(findViewById(R.id.custom_compose));
-            // TODO: below code added for testing purpose..remove it later
-
-//            cometChat.logout(new Callbacks() {
-//                @Override
-//                public void successCallback(JSONObject jsonObject) {
-//                    Toast.makeText(CometChatActivity.this, "logged out", Toast.LENGTH_SHORT).show();
-//                }
-//
-//                @Override
-//                public void failCallback(JSONObject jsonObject) {
-//
-//                }
-//            });
         } else if (id == R.id.custom_setting) {
             startActivity(new Intent(CometChatActivity.this, CCSettingsActivity.class));
+        }else if (id == R.id.delete_conversation){
+            if (longPressedContactIds != null) {
+                Logger.error(TAG, "onOptionsItemSelected: contact ids: "+longPressedContactIds.toString() );
+                Iterator value = longPressedContactIds.iterator();
+                while (value.hasNext()){
+                    Conversation.deleteConversationByBuddyId(value.next()+"");
+                }
+            }
+            if (longPressedGroupIds != null) {
+                Logger.error(TAG, "onOptionsItemSelected: group id: "+longPressedGroupIds.toString() );
+                Iterator value = longPressedGroupIds.iterator();
+                while (value.hasNext()){
+                    Conversation.deleteConversationByGroupID(value.next()+"");
+                }
+            }
+            Intent iintent = new Intent(BroadCastReceiverKeys.LIST_DATA_UPDATED_BROADCAST);
+            iintent.putExtra(BroadCastReceiverKeys.IntentExtrasKeys.REFRESH_RECENT_LIST_KEY, 1);
+            sendBroadcast(iintent);
+            menu.findItem(R.id.delete_conversation).setVisible(false);
+            longPressedGroupIds = null;
+            longPressedContactIds = null;
         }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -907,15 +959,15 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
         tvNewGroup.setText(cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_CREATE_NEW_GROUP)).toString());
         tvNewBroadcast.setText(cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_BROADCAST_MESSAGE)).toString());
 
-        Logger.error(TAG,"groups state: "+groupState.name());
-        if (groupState == FeatureState.INVISIBLE) {
+        Logger.error(TAG,"groups state: "+createGroup.name());
+        if (createGroup == FeatureState.INVISIBLE) {
             newGroup.setVisibility(View.GONE);
         } else {
             newGroup.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     showPopup.dismiss();
-                    if(groupState == FeatureState.ACCESSIBLE){
+                    if(createGroup == FeatureState.ACCESSIBLE){
                         Intent intent = new Intent(CometChatActivity.this, CCCreateChatroomActivity.class);
                         startActivity(intent);
                     }else {
@@ -954,6 +1006,44 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
         showPopup.setHeight(Toolbar.LayoutParams.WRAP_CONTENT);
         showPopup.setAnimationStyle(R.style.Animations_GrowFromTop);
         showPopup.showAsDropDown(view);
+    }
+
+    @Override
+    public void onLongPressed(int id , boolean isGroup) {
+        if(longPressedContactIds == null){
+            if (!isGroup) {
+                longPressedContactIds = new HashSet<>();
+                longPressedContactIds.add(id);
+            }
+        }else {
+            if (!isGroup) {
+                if (longPressedContactIds.contains(id)) {
+                    longPressedContactIds.remove(id);
+                }else {
+                    longPressedContactIds.add(id);
+                }
+            }
+        }
+        if(longPressedGroupIds == null){
+            if (isGroup) {
+                longPressedGroupIds = new HashSet<>();
+                longPressedGroupIds.add(id);
+            }
+        }else {
+            if (isGroup) {
+                if (longPressedGroupIds.contains(id)) {
+                    longPressedGroupIds.remove(id);
+                }else {
+                    longPressedGroupIds.add(id);
+                }
+            }
+        }
+
+        if ((longPressedContactIds != null && longPressedContactIds.size() > 0) || (longPressedGroupIds != null && longPressedGroupIds.size() > 0)) {
+            menu.findItem(R.id.delete_conversation).setVisible(true);
+        }else {
+            menu.findItem(R.id.delete_conversation).setVisible(false);
+        }
     }
 
     class ViewPagerAdapter extends FragmentPagerAdapter {
@@ -1022,7 +1112,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                 Logger.error(TAG, "Conversations badge count = " + badgeCount);
                 TabLayout.Tab tab = tabs.getTabAt(recentTabIndex);
                 LinearLayout view = (LinearLayout) tab.getCustomView();
-                BadgeView bg = (BadgeView) view.findViewById(R.id.batch_view);
+                BadgeView bg = (BadgeView) view.findViewById(R.id.cc_batch_view);
                 if (Integer.parseInt(badgeCount) > 0) {
                     bg.setVisibility(View.VISIBLE);
                     bg.setText(badgeCount);
@@ -1041,7 +1131,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                 Logger.error(TAG, "Contacts badge count = " + badgeCount);
                 TabLayout.Tab tab = tabs.getTabAt(contactsTabIndex);
                 LinearLayout view = (LinearLayout) tab.getCustomView();
-                BadgeView bg = (BadgeView) view.findViewById(R.id.batch_view);
+                BadgeView bg = (BadgeView) view.findViewById(R.id.cc_batch_view);
                 if (Integer.parseInt(badgeCount) > 0) {
                     bg.setVisibility(View.VISIBLE);
                     bg.setText(badgeCount);
@@ -1057,7 +1147,7 @@ public class CometChatActivity extends AppCompatActivity implements OnAlertDialo
                 Logger.error(TAG, "Groups badge count = " + badgeCount);
                 TabLayout.Tab tab = tabs.getTabAt(groupsTabIndex);
                 LinearLayout view = (LinearLayout) tab.getCustomView();
-                BadgeView bg = (BadgeView) view.findViewById(R.id.batch_view);
+                BadgeView bg = (BadgeView) view.findViewById(R.id.cc_batch_view);
                 if (Integer.parseInt(badgeCount) > 0) {
                     bg.setVisibility(View.VISIBLE);
                     bg.setText(badgeCount);

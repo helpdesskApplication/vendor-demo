@@ -104,9 +104,9 @@ public class Contact extends SugarRecord {
                         if (buddy.has(JsonParsingKeys.LSTN)) {
                             String lstn = buddy.getString(JsonParsingKeys.LSTN);
                             if (lstn == null || lstn.isEmpty() || lstn.equals("") || lstn.equals("null")) {
-                                contactPojo.lstn = 1;
+                                contactPojo.lstn = 0;
                             } else {
-                                contactPojo.lstn = Integer.parseInt(lstn);
+                                contactPojo.lstn = 1;
                             }
                         }
                         if (buddy.has(JsonParsingKeys.LASTSEEN)) {
@@ -242,5 +242,10 @@ public class Contact extends SugarRecord {
             return contactList.size();
         }
         return 0;
+    }
+
+    public static List<Contact> getContactWithLimit(int limit){
+        return findWithQuery(Contact.class, "SELECT * FROM `" + TABLE_NAME + "` WHERE `" + SHOW_USER + "` = 1 ORDER BY `" + COLUMN_LAST_UPDATED
+                + "` DESC LIMIT "+ limit+";", new String[0]);
     }
 }

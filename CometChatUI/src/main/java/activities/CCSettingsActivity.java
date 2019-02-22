@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.inscripts.custom.CustomAlertDialogHelper;
 import com.inscripts.enums.FeatureState;
@@ -39,6 +41,7 @@ import cometchat.inscripts.com.cometchatcore.coresdk.CCUIHelper;
 import cometchat.inscripts.com.cometchatcore.coresdk.CometChat;
 import cometchat.inscripts.com.cometchatcore.coresdk.MessageSDK;
 import cometchat.inscripts.com.readyui.R;
+import helpers.CCAnalyticsHelper;
 import models.Bot;
 import models.Contact;
 import models.Conversation;
@@ -199,6 +202,7 @@ tvShareapp.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingTy
         }else {
             viewShareApp.setVisibility(View.GONE);
         }
+        Logger.error(TAG, "setupFields: invite_via_sms: "+(Boolean)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.INVITE_VIA_SMS_ENABLED)));
         if((Boolean)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.INVITE_VIA_SMS_ENABLED))){
 tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_INVITE_USERS)));
         }else {
@@ -232,6 +236,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                CCAnalyticsHelper.logFeatureEvent("View Profile Settings");
                 Intent profileIntent = new Intent(CCSettingsActivity.this, CCViewProfileActivity.class);
                 startActivity(profileIntent);
             }
@@ -240,6 +245,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewBots.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                CCAnalyticsHelper.logFeatureEvent("View Bots");
                 if (botsState == FeatureState.INACCESSIBLE) {
                     AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCSettingsActivity.this);
                     alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -255,6 +261,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewChatSetting.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                CCAnalyticsHelper.logFeatureEvent("Chat Settings");
                 Intent chatSettingIntent = new Intent(CCSettingsActivity.this,CCChatSettingsActivity.class);
                 chatSettingIntent.putExtra("isChatSetting",true);
                 startActivity(chatSettingIntent);
@@ -264,6 +271,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewNotificationSetting.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                CCAnalyticsHelper.logFeatureEvent("Notification Settings");
                 Intent chatSettingIntent = new Intent(CCSettingsActivity.this,CCChatSettingsActivity.class);
                 chatSettingIntent.putExtra("isChatSetting",false);
                 startActivity(chatSettingIntent);
@@ -273,6 +281,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewLanguage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                CCAnalyticsHelper.logFeatureEvent("Language/Translate Conversation Settings");
                 if (realTimeTranslationState == FeatureState.INACCESSIBLE) {
                     AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCSettingsActivity.this);
                     alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -288,6 +297,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewBlockedUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                CCAnalyticsHelper.logFeatureEvent("View Blocked Users");
                 Intent unblockIntent = new Intent(CCSettingsActivity.this,CCUnblockuserActivity.class);
                 startActivity(unblockIntent);
             }
@@ -296,6 +306,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewGames.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                CCAnalyticsHelper.logFeatureEvent("Games Settings");
                 if (gamesState == FeatureState.INACCESSIBLE) {
                     AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCSettingsActivity.this);
                     alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -318,6 +329,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewShareApp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                CCAnalyticsHelper.logFeatureEvent("Share This App Settings");
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 if (((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_INVITE_MESSAGE))==null)) {
                     shareIntent.putExtra(Intent.EXTRA_TEXT, LocalConfig.getDefaultInviteMessage());
@@ -332,13 +344,23 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         viewInviteContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(CCSettingsActivity.this, CCInviteViaSmsActivity.class));
+                CCAnalyticsHelper.logFeatureEvent("Invite Phone Contacts Settings");
+                Uri smsUri = Uri.parse("tel:");
+                Intent intent = new Intent(Intent.ACTION_VIEW, smsUri);
+                intent.putExtra("sms_body", (String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_INVITE_MESSAGE)));
+                intent.setType("vnd.android-dir/mms-sms");//here setType will set the previous data null.
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                }else {
+                    Toast.makeText(CCSettingsActivity.this, "Messaging App not found", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         viewAnnouncements.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                CCAnalyticsHelper.logFeatureEvent("Announcements Settings");
                 if (announcementState == FeatureState.INACCESSIBLE) {
                     AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCSettingsActivity.this);
                     alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -371,6 +393,7 @@ tvInvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType
         if (which == DialogInterface.BUTTON_POSITIVE) {
             switch (popupId) {
                 case LOGOUT:
+                    CCAnalyticsHelper.logFeatureEvent("Logout Button");
                     CCHeartbeat.getLaunchCallbackListner().onLogout();
                     alertDialog.dismiss();
 

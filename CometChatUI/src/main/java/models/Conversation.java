@@ -156,4 +156,15 @@ public class Conversation extends SugarRecord {
     public static void deleteAllGroups() {
         Conversation.deleteAll(Conversation.class, COLUMN_CHATROOM_ID + " != ?", "0");
     }
+
+    public static List<Conversation> getcontactConversation(int number){
+        List<Conversation> list = findWithQuery(Conversation.class, "SELECT * FROM `" + TABLE_NAME
+                + "` WHERE `" + COLUMN_BUDDY_ID + "` != 0"+ " ORDER BY `" + COLUMN_TIMESTAMP +
+                "` DESC LIMIT "+number+";", new String[0]);
+
+        if (null != list && list.size() > 0) {
+            return list;
+        }
+        return null;
+    }
 }

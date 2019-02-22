@@ -21,7 +21,7 @@ public class CCSubscribeService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        CCSubcribe.SubcribeToCometChat(mActivity);
+       // CCSubcribe.SubcribeToCometChat(mActivity);
         return myBinder;
     }
 

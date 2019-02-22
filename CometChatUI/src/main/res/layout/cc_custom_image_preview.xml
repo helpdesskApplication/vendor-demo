@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="#000000" >
 
-    <ImageView
+    <com.inscripts.custom.ZoomableImageView
         android:id="@+id/imageViewLargePreview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -12,6 +12,13 @@
         android:layout_centerInParent="true"
         android:layout_centerVertical="true"
         android:src="@drawable/cc_thumbnail_default" />
+    <ImageView
+        android:id="@+id/imageViewForGif"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:src="@drawable/cc_thumbnail_default"
+        android:visibility="gone"/>
 
     <ImageView
         android:id="@+id/imageViewClosePreviewPopup"
@@ -32,5 +39,14 @@
         android:layout_centerVertical="true"
         android:src="@drawable/cc_play_video_button"
         android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/imgShare"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="15dp"
+        android:src="@drawable/cc_ic_share_app"/>
 
 </RelativeLayout>

@@ -54,7 +54,7 @@
                     <RelativeLayout
                             android:id="@+id/ll_view_profile"
                             android:layout_width="wrap_content"
-                            android:layout_height="70dp"
+                            android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:foreground="?attr/selectableItemBackground">
 
@@ -62,6 +62,7 @@
                                 android:id="@+id/iv_view_profile"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -70,9 +71,11 @@
                             <TextView
                                 android:id="@+id/tv_view_profile"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
+                                android:layout_height="wrap_content"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
+                                android:ellipsize="end"
+                                android:layout_centerVertical="true"
                                 android:layout_toRightOf="@+id/iv_view_profile"
                                 android:layout_toEndOf="@+id/iv_view_profile"
                                 android:gravity="center_vertical"
@@ -98,7 +101,7 @@
                     <RelativeLayout
                             android:id="@+id/ll_announcements"
                             android:layout_width="wrap_content"
-                            android:layout_height="70dp"
+                            android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:foreground="?attr/selectableItemBackground">
 
@@ -106,6 +109,7 @@
                                 android:id="@+id/iv_announcements"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -114,9 +118,11 @@
                             <TextView
                                 android:id="@+id/tv_announcement"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
+                                android:layout_centerVertical="true"
                                 android:layout_toRightOf="@+id/iv_announcements"
                                 android:layout_toEndOf="@+id/iv_announcements"
                                 android:gravity="center_vertical"
@@ -141,7 +147,7 @@
                     <RelativeLayout
                             android:id="@+id/ll_bots"
                             android:layout_width="wrap_content"
-                            android:layout_height="70dp"
+                            android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:foreground="?attr/selectableItemBackground">
 
@@ -149,6 +155,7 @@
                                 android:id="@+id/image_view_bots"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -157,12 +164,14 @@
                             <TextView
                                 android:id="@+id/text_view_bots"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
+                                android:layout_height="wrap_content"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
+                                android:layout_centerVertical="true"
                                 android:layout_toRightOf="@+id/image_view_bots"
                                 android:layout_toEndOf="@+id/image_view_bots"
                                 android:gravity="center_vertical"
+                                android:ellipsize="end"
                                 android:text="Bots"
                                 android:textColor="#000"
                                 android:textSize="18sp" />
@@ -184,7 +193,7 @@
                     <RelativeLayout
                             android:id="@+id/ll_chat_setting"
                             android:layout_width="wrap_content"
-                            android:layout_height="70dp"
+                            android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:foreground="?attr/selectableItemBackground">
 
@@ -192,6 +201,7 @@
                                 android:id="@+id/setting_chat_setting"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -200,10 +210,12 @@
                             <TextView
                                 android:id="@+id/chat_setting_title"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
+                                android:layout_height="wrap_content"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
                                 android:layout_marginTop="5dp"
+                                android:layout_centerVertical="true"
+                                android:ellipsize="end"
                                 android:layout_toRightOf="@+id/setting_chat_setting"
                                 android:gravity="center_vertical"
                                 android:text="@string/chat_settings_text"
@@ -226,7 +238,7 @@
                     <RelativeLayout
                             android:id="@+id/ll_notification_setting"
                             android:layout_width="wrap_content"
-                            android:layout_height="70dp"
+                            android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:foreground="?attr/selectableItemBackground">
 
@@ -234,6 +246,7 @@
                                 android:id="@+id/setting_notification_setting"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="13dp"
@@ -243,14 +256,17 @@
                                 android:id="@+id/notification_setting_title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:ellipsize="end"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
+                                android:layout_marginEnd="40dp"
                                 android:layout_marginTop="5dp"
                                 android:layout_toRightOf="@+id/setting_notification_setting"
                                 android:gravity="center_vertical"
                                 android:text="@string/notification_settings_text"
                                 android:textColor="#000"
-                                android:textSize="18sp" />
+                                android:textSize="18sp"
+                                android:layout_marginRight="40dp" />
 
                             <TextView
                                 android:id="@+id/notification_setting_subtitle"
@@ -283,7 +299,7 @@
                     <RelativeLayout
                             android:id="@+id/ll_setting_language"
                             android:layout_width="wrap_content"
-                            android:layout_height="70dp"
+                            android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:foreground="?attr/selectableItemBackground">
 
@@ -291,6 +307,7 @@
                                 android:id="@+id/setting_language"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -300,6 +317,8 @@
                                 android:id="@+id/setting_language_title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:layout_alignTop="@+id/setting_language"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
                                 android:layout_marginTop="5dp"
@@ -341,7 +360,7 @@
                     <RelativeLayout
                             android:id="@+id/ll_block_user"
                             android:layout_width="wrap_content"
-                            android:layout_height="70dp"
+                            android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:foreground="?attr/selectableItemBackground">
 
@@ -349,6 +368,7 @@
                                 android:id="@+id/setting_block_user"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -358,6 +378,7 @@
                                 android:id="@+id/block_user_title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:ellipsize="end"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
                                 android:layout_marginTop="5dp"
@@ -398,7 +419,7 @@
                     <RelativeLayout
                             android:id="@+id/ll_setting_games"
                             android:layout_width="wrap_content"
-                            android:layout_height="70dp"
+                            android:layout_height="wrap_content"
                             android:padding="10dp"
                             android:foreground="?attr/selectableItemBackground">
 
@@ -406,6 +427,7 @@
                                 android:id="@+id/setting_games"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -415,9 +437,11 @@
                                 android:id="@+id/setting_games_title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
+                                android:ellipsize="end"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
                                 android:layout_marginTop="5dp"
+                                android:layout_centerVertical="true"
                                 android:layout_toRightOf="@+id/setting_games"
                                 android:layout_toEndOf="@+id/setting_games"
                                 android:gravity="center_vertical"
@@ -451,6 +475,7 @@
                                 android:id="@+id/img_share_app"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -459,10 +484,12 @@
                             <TextView
                                 android:id="@+id/setting_share_title"
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
                                 android:layout_marginTop="5dp"
+                                android:layout_centerVertical="true"
                                 android:layout_toRightOf="@+id/img_share_app"
                                 android:layout_toEndOf="@+id/img_share_app"
                                 android:gravity="center_vertical"
@@ -497,6 +524,7 @@
                                 android:id="@+id/img_invite_contact"
                                 android:layout_width="50dp"
                                 android:layout_height="50dp"
+                                android:layout_centerVertical="true"
                                 android:background="@drawable/cc_group_background"
                                 android:contentDescription="image"
                                 android:padding="12dp"
@@ -508,6 +536,8 @@
                                 android:layout_height="match_parent"
                                 android:layout_marginLeft="15dp"
                                 android:layout_marginStart="15dp"
+                                android:ellipsize="end"
+                                android:layout_centerVertical="true"
                                 android:layout_marginTop="5dp"
                                 android:layout_toRightOf="@+id/img_invite_contact"
                                 android:layout_toEndOf="@+id/img_invite_contact"

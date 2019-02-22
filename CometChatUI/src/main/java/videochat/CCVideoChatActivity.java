@@ -148,7 +148,7 @@ public class CCVideoChatActivity extends AppCompatActivity implements View.OnTou
         super.onDestroy();
         unregisterReceiver(broadcastReceiver);
         PreferenceHelper.save(BroadCastReceiverKeys.AvchatKeys.CALL_SESSION_ONGOING,0);
-        if(wakeLock != null)
+        if(wakeLock != null && wakeLock.isHeld())
             wakeLock.release();
     }
 
@@ -196,8 +196,10 @@ public class CCVideoChatActivity extends AppCompatActivity implements View.OnTou
 
             powerManager = (PowerManager) getSystemService(POWER_SERVICE);
             wakeLock = powerManager.newWakeLock(field, getLocalClassName());
-            if(!wakeLock.isHeld()) {
-                wakeLock.acquire();
+            if (!isSpeakerOn) {
+                if(!wakeLock.isHeld()) {
+                    wakeLock.acquire();
+                }
             }
         }
 
@@ -578,10 +580,16 @@ public class CCVideoChatActivity extends AppCompatActivity implements View.OnTou
                 cometChat.switchSpeakers(this,false);
                 isSpeakerOn = false;
                 v.setBackgroundResource(R.drawable.cc_custom_round_call_phone_selector);
+                if(wakeLock !=null && !wakeLock.isHeld()) {
+                    wakeLock.acquire();
+                }
             } else {
                 cometChat.switchSpeakers(this,true);
                 isSpeakerOn = true;
                 v.setBackgroundResource(R.drawable.cc_custom_round_call_speaker_selector);
+                if(wakeLock != null && wakeLock.isHeld()) {
+                    wakeLock.release();
+                }
             }
         }
     }

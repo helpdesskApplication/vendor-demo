@@ -52,19 +52,12 @@
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
         <RelativeLayout
-            android:id="@+id/rel_adView"
+            android:id="@+id/cc_rel_adView"
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:gravity="center"
             android:layout_alignParentBottom="true">
-
-            <!--<com.google.android.gms.ads.AdView
-                android:id="@+id/adView"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                ads:adSize="BANNER"
-
-                />-->
+            <!-- Dynamically generated adView is added here -->
         </RelativeLayout>
 
     </RelativeLayout>

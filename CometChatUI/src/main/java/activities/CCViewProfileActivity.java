@@ -6,8 +6,8 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.res.ColorStateList;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -18,8 +18,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Parcelable;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -37,17 +37,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.inscripts.custom.CustomAlertDialogHelper;
+import com.inscripts.custom.ProfileRoundedImageView;
 import com.inscripts.enums.SettingSubType;
 import com.inscripts.enums.SettingType;
 import com.inscripts.factories.LocalStorageFactory;
 import com.inscripts.factories.URLFactory;
+import com.inscripts.helpers.CCPermissionHelper;
 import com.inscripts.helpers.PreferenceHelper;
 import com.inscripts.helpers.VolleyHelper;
 import com.inscripts.interfaces.Callbacks;
 import com.inscripts.interfaces.CometchatCallbacks;
 import com.inscripts.interfaces.OnAlertDialogButtonClickListener;
 import com.inscripts.interfaces.VolleyAjaxCallbacks;
-import com.inscripts.jsonphp.JsonPhp;
 import com.inscripts.keys.CometChatKeys;
 import com.inscripts.keys.PreferenceKeys;
 import com.inscripts.plugins.ImageSharing;
@@ -59,21 +60,21 @@ import com.inscripts.utils.StaticMembers;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import cometchat.inscripts.com.cometchatcore.coresdk.CCUIHelper;
 import cometchat.inscripts.com.cometchatcore.coresdk.CometChat;
 import cometchat.inscripts.com.readyui.R;
 import services.AvatarService;
 
-import com.inscripts.custom.ProfileRoundedImageView;
-
 public class CCViewProfileActivity extends AppCompatActivity implements View.OnClickListener, OnAlertDialogButtonClickListener {
 
     private static final String TAG = CCViewProfileActivity.class.getSimpleName();
+    private static final int PERMISSION_STORAGE = 10;
     private Toolbar toolbar;
     private RelativeLayout ccContainer;
 
@@ -165,10 +166,11 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
                 LocalStorageFactory.loadImageUsingURL(this, url, avatarImage, R.drawable.cc_default_avatar);
             }
             FrameLayout imageContainer = (FrameLayout) findViewById(R.id.relativeLayoutProfilePicContainer);
-
-                if ((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.USERNAME_PASSWORD_ENABLED))=="1" || PreferenceHelper.contains(PreferenceKeys.LoginKeys.LOGGED_IN_AS_COD)) {
+                if (((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.USERNAME_PASSWORD_ENABLED))).equalsIgnoreCase("1") ||
+                        PreferenceHelper.contains(PreferenceKeys.LoginKeys.LOGGED_IN_AS_COD)) {
                     ivEditImage.setVisibility(View.GONE);
                 } else {
+                    ivEditImage.setVisibility(View.VISIBLE);
                     ivEditImage.setOnClickListener(this);
                 }
         } catch (Exception e) {
@@ -230,7 +232,8 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
         });
 
         if (PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_GUEST) != null && PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_GUEST).equals("1")) {
-            imgEditUserName.setOnClickListener(new View.OnClickListener() {
+            imgEditUserName.setVisibility(View.VISIBLE);
+            /*imgEditUserName.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     View dialogview1 = getLayoutInflater().inflate(R.layout.cc_custom_dialog, null);
@@ -256,38 +259,40 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
 
                     new CustomAlertDialogHelper(CCViewProfileActivity.this, nameTitle, dialogview1, (String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_SET)), "", (String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_CANCEL)), CCViewProfileActivity.this, EDIT_USER_NAME,false);
                 }
-            });
+            });*/
         } else if (PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_DEMO) != null && PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_DEMO).equals("1")) {
             imgEditUserName.setVisibility(View.VISIBLE);
-
-            imgEditUserName.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    View dialogview1 = getLayoutInflater().inflate(R.layout.cc_custom_dialog, null);
-
-                    TextView dialogueTitle1 = (TextView) dialogview1.findViewById(R.id.textViewDialogueTitle);
-                    dialogueTitle1.setVisibility(View.GONE);
-
-                    EditText dialogueTextInput1 = (EditText) dialogview1.findViewById(R.id.edittextDialogueInput);
-                    dialogueTextInput1.setInputType(InputType.TYPE_CLASS_TEXT);
-                    String nameTitle = (String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_SET_USERNAME));
-                    dialogueTextInput1.setHint(nameTitle);
-
-                    SessionData sessionData = SessionData.getInstance();
-                    String name = "";
-                    if (!TextUtils.isEmpty(sessionData.getName()) && sessionData.getName().startsWith("Guest-")) {
-                        name = sessionData.getName().substring(6);
-                    } else {
-                        name = sessionData.getName();
-                    }
-                    dialogueTextInput1.setText(name);
-                    dialogueTextInput1.setSelection(name.length());
-                    new CustomAlertDialogHelper(CCViewProfileActivity.this, nameTitle, dialogview1, (String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_SET)), "", (String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_CANCEL)), CCViewProfileActivity.this, EDIT_USER_NAME,false);
-                }
-            });
-        } else {
+        } else if(PreferenceHelper.contains("LOGGED_IN_AS_PHONE_NUMBER") && PreferenceHelper.get("LOGGED_IN_AS_PHONE_NUMBER").equals("1")){
+            imgEditUserName.setVisibility(View.VISIBLE);
+        }else {
             imgEditUserName.setVisibility(View.GONE);
         }
+        imgEditUserName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                View dialogview1 = getLayoutInflater().inflate(R.layout.cc_custom_dialog, null);
+
+                TextView dialogueTitle1 = (TextView) dialogview1.findViewById(R.id.textViewDialogueTitle);
+                dialogueTitle1.setVisibility(View.GONE);
+
+                EditText dialogueTextInput1 = (EditText) dialogview1.findViewById(R.id.edittextDialogueInput);
+                dialogueTextInput1.setInputType(InputType.TYPE_CLASS_TEXT);
+                String nameTitle = (String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_SET_USERNAME));
+                dialogueTextInput1.setHint(nameTitle);
+
+                SessionData sessionData = SessionData.getInstance();
+                String name = "";
+                if (!TextUtils.isEmpty(sessionData.getName()) && sessionData.getName().startsWith("Guest-")) {
+                    name = sessionData.getName().substring(6);
+                } else {
+                    name = sessionData.getName();
+                }
+                dialogueTextInput1.setText(name);
+                dialogueTextInput1.setSelection(name.length());
+                new CustomAlertDialogHelper(CCViewProfileActivity.this, nameTitle, dialogview1, (String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_SET)), "", (String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_CANCEL)), CCViewProfileActivity.this, EDIT_USER_NAME, false);
+            }
+        });
+
     }
 
     @Override
@@ -295,7 +300,7 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
         super.onActivityResult(requestCode, resultCode, data);
         try {
             if (resultCode == Activity.RESULT_OK) {
-                if (requestCode == 1) {
+               /* if (requestCode == 1) {
                     boolean isCamera;
                     isCamera = ((data == null) || (data.hasExtra(MediaStore.EXTRA_OUTPUT)));
 
@@ -319,7 +324,7 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
                     intent.putExtra(MediaStore.EXTRA_OUTPUT, tempFileURI);
                     startActivityForResult(intent, 2);
                 } else if (requestCode == 2) {
-                    Bitmap profilePic = null;
+                    *//*Bitmap profilePic = null;
                     String fileName, filePath;
                     Bundle extras = data.getExtras();
                     if (null != extras) {
@@ -348,7 +353,72 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
                         }
                     }
 
-                    fileName = fileName.replaceAll("-", "").replaceAll(" ", "_").replaceAll("_", "");
+                    fileName = fileName.replaceAll("-", "").replaceAll(" ", "_").replaceAll("_", "");*//*
+                    Bitmap profilePic = null;
+                    String fileName = null, filePath;
+                    Bundle extras = data.getExtras();
+
+                    if (null != extras) {
+                        profilePic = extras.getParcelable("data");
+                    }
+
+                    if (profilePic == null) {
+                        fileUri = data.getData();
+                        Logger.error(TAG,"File uri = "+fileUri);
+                        String wholeID = null;
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                            InputStream is = null;
+                            String myPath;
+                            if (fileUri.getAuthority() != null) {
+                                try {
+                                    is = getContentResolver().openInputStream(fileUri);
+                                    Bitmap bmp = BitmapFactory.decodeStream(is);
+                                    String path = ImageSharing.writeToTempImageAndGetPathUri(this, bmp).toString();
+                                    Uri pathUri = Uri.parse(path);
+                                    if (pathUri != null) {
+                                        String[] filePathColumn = {MediaStore.MediaColumns.DATA};
+                                        Cursor cursor = PreferenceHelper.getContext().getContentResolver()
+                                                .query(pathUri, filePathColumn, null, null, null);
+                                        cursor.moveToFirst();
+                                        myPath = cursor.getString(cursor.getColumnIndex(filePathColumn[0]));
+                                        Logger.error(TAG,"ACTION_SEND myPath = " + myPath);
+                                        File imgFile = new File(myPath);
+                                        Logger.error(TAG,"ACTION_SEND imgFile.exists() = " + imgFile.exists());
+                                        if (imgFile.exists()) {
+                                            profilePic = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                                            Logger.error(TAG,"Decoded ProfilePic = "+profilePic);
+                                            avatarImage.setImageBitmap(profilePic);
+                                            fileName = "temp"+System.currentTimeMillis()+".png";
+                                        }
+                                        cursor.close();
+                                    } else {
+                                        myPath = null;
+                                    }
+                                } catch (FileNotFoundException e2) {
+                                    Logger.error(TAG,"ACTION_SEND e2 = " + e2.toString());
+                                    Toast.makeText(getApplicationContext(), "Cant Send Empty File ", Toast.LENGTH_SHORT).show();
+                                    e2.printStackTrace();
+                                } finally {
+                                    try {
+                                        if (is != null)
+                                            is.close();
+                                    } catch (IOException e3) {
+                                        e3.printStackTrace();
+                                    }
+                                }
+                            }
+
+                        }
+                    } else {
+                        avatarImage.setImageBitmap(profilePic);
+                        filePath = LocalStorageFactory.getFilePathFromIntent(data);
+
+                        if (null == filePath) {
+                            fileName = "temp.png";
+                        } else {
+                            fileName = filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length());
+                        }
+                    }
 
                     changeAvatar(profilePic, fileName, new CometchatCallbacks() {
 
@@ -361,6 +431,110 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
                         @Override
                         public void failCallback() {
                             Logger.error("change avatar failed");
+                            Toast.makeText(CCViewProfileActivity.this, getResources().getString(R.string.avatar_changed_failure), Toast.LENGTH_SHORT).show();
+                        }
+                    });*/
+
+                if (requestCode == 1) {
+                    boolean isCamera;
+                    isCamera = ((data == null) || (data.hasExtra(MediaStore.EXTRA_OUTPUT)));
+                    Logger.error(TAG,"File uri data = "+data.getData());
+                    Intent intent = new Intent("com.android.camera.action.CROP");
+                    if (data.getData()!= null && data.getData().getAuthority() != null) {
+                        InputStream is = getContentResolver().openInputStream(data.getData());
+                        Bitmap bmp = BitmapFactory.decodeStream(is);
+                        String path = ImageSharing.writeToTempImageAndGetPathUri(this, bmp).toString();
+                        Uri pathUri = Uri.parse(path);
+                        intent.setDataAndType(pathUri, StaticMembers.IMAGE_TYPE);
+                        intent.putExtra("crop", "true");
+                        intent.putExtra("aspectX", 1);
+                        intent.putExtra("aspectY", 1);
+                        intent.putExtra("scale", true);
+                        intent.putExtra("noFaceDetection", true);
+                        intent.putExtra("return-data", false);
+                        startActivityForResult(intent, 2);
+                    }
+                }else if (requestCode == 2) {
+                    Bitmap profilePic = null;
+                    String fileName = null, filePath;
+                    Bundle extras = data.getExtras();
+
+                    if (null != extras) {
+                        profilePic = extras.getParcelable("data");
+                    }
+
+                    if (profilePic == null) {
+                        fileUri = data.getData();
+                        Logger.error(TAG,"File uri = "+fileUri);
+                        String wholeID = null;
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                            InputStream is = null;
+                            String myPath;
+                            if (fileUri.getAuthority() != null) {
+                                try {
+                                    is = getContentResolver().openInputStream(fileUri);
+                                    Bitmap bmp = BitmapFactory.decodeStream(is);
+                                    String path = ImageSharing.writeToTempImageAndGetPathUri(this, bmp).toString();
+                                    Uri pathUri = Uri.parse(path);
+                                    if (pathUri != null) {
+                                        String[] filePathColumn = {MediaStore.MediaColumns.DATA};
+                                        Cursor cursor = PreferenceHelper.getContext().getContentResolver()
+                                                .query(pathUri, filePathColumn, null, null, null);
+                                        cursor.moveToFirst();
+                                        myPath = cursor.getString(cursor.getColumnIndex(filePathColumn[0]));
+                                        Logger.error(TAG,"ACTION_SEND myPath = " + myPath);
+                                        File imgFile = new File(myPath);
+                                        Logger.error(TAG,"ACTION_SEND imgFile.exists() = " + imgFile.exists());
+                                        if (imgFile.exists()) {
+                                            profilePic = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                                            Logger.error(TAG,"Decoded ProfilePic = "+profilePic);
+                                            avatarImage.setImageBitmap(profilePic);
+                                            fileName = "temp"+System.currentTimeMillis()+".png";
+                                        }
+                                        cursor.close();
+                                    } else {
+                                        myPath = null;
+                                    }
+                                } catch (FileNotFoundException e2) {
+                                    Logger.error(TAG,"ACTION_SEND e2 = " + e2.toString());
+                                    Toast.makeText(getApplicationContext(), "Cant Send Empty File ", Toast.LENGTH_SHORT).show();
+                                    e2.printStackTrace();
+                                } finally {
+                                    try {
+                                        if (is != null)
+                                            is.close();
+                                    } catch (IOException e3) {
+                                        e3.printStackTrace();
+                                    }
+                                }
+                            }
+
+                        }
+                    } else {
+                        avatarImage.setImageBitmap(profilePic);
+                        filePath = LocalStorageFactory.getFilePathFromIntent(data);
+
+                        if (null == filePath) {
+                            fileName = "temp.png";
+                        } else {
+                            fileName = filePath.substring(filePath.lastIndexOf("/") + 1, filePath.length());
+                        }
+                    }
+                    Logger.error(TAG,"profile data = "+profilePic);
+
+
+//                    avtarUploading = true;
+                    changeAvatar(profilePic, fileName, new CometchatCallbacks() {
+
+                        @Override
+                        public void successCallback() {
+                            Toast.makeText(CCViewProfileActivity.this, getResources().getString(R.string.avatar_changed_success), Toast.LENGTH_SHORT).show();
+//                            avtarUploading = false;
+
+                        }
+
+                        @Override
+                        public void failCallback() {
                             Toast.makeText(CCViewProfileActivity.this, getResources().getString(R.string.avatar_changed_failure), Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -404,56 +578,83 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
                     EditText statusMessageField1 = (EditText) v.findViewById(R.id.edittextDialogueInput);
                     final String newUserName = statusMessageField1.getText().toString().trim();
                     if (!TextUtils.isEmpty(newUserName)) {
-                        String url = "";
-                        String key = "";
+                        username.setText(newUserName);
+                        if (!PreferenceHelper.contains("LOGGED_IN_AS_PHONE_NUMBER")) {
+                            String url = "";
+                            String key = "";
 
-                        if ((PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_GUEST) != null && PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_GUEST).equals("1")) ||
-                                (PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_DEMO) != null && PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_DEMO).equals("1"))) {
-                            url = URLFactory.getSendOneToOneMessageURL();
-                            key = CometChatKeys.AjaxKeys.GUEST_NAME;
-                        } else {
-                            url = URLFactory.getPhoneRegisterURL();
-                            key = CometChatKeys.AjaxKeys.ACTION;
-                        }
+                            if ((PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_GUEST) != null && PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_GUEST).equals("1")) ||
+                                    (PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_DEMO) != null && PreferenceHelper.get(PreferenceKeys.LoginKeys.LOGGED_IN_AS_DEMO).equals("1"))) {
+                                url = URLFactory.getSendOneToOneMessageURL();
+                                key = CometChatKeys.AjaxKeys.GUEST_NAME;
+                            } else if((PreferenceHelper.get("LOGGED_IN_AS_PHONE_NUMBER") != null && PreferenceHelper.get("LOGGED_IN_AS_PHONE_NUMBER").equals("1"))){
 
-                        VolleyHelper volley = new VolleyHelper(CCViewProfileActivity.this, url,
-                                new VolleyAjaxCallbacks() {
+                            } else{
+                                url = URLFactory.getPhoneRegisterURL();
+                                key = CometChatKeys.AjaxKeys.ACTION;
+                            }
 
-                                    @Override
-                                    public void successCallback(String response) {
-                                        Logger.error("ViewProfileAcivity : onButtonClick() : success : " + response);
-                                        SessionData.getInstance().setUserInfoHeartBeatFlag("1");
-                                        SessionData.getInstance().setName(newUserName);
-                                        PreferenceHelper.save(PreferenceKeys.UserKeys.USER_NAME, newUserName);
+                            VolleyHelper volley = new VolleyHelper(CCViewProfileActivity.this, url,
+                                    new VolleyAjaxCallbacks() {
 
-                                        String displayName = "";
-                                        if (!TextUtils.isEmpty(newUserName) && !newUserName.startsWith("Guest-")) {
-                                            displayName = "Guest-" + newUserName;
-                                        }
-                                        username.setText(displayName);
+                                        @Override
+                                        public void successCallback(String response) {
+                                            Logger.error("ViewProfileAcivity : onButtonClick() : success : " + response);
+                                            SessionData.getInstance().setUserInfoHeartBeatFlag("1");
+                                            SessionData.getInstance().setName(newUserName);
+                                            PreferenceHelper.save(PreferenceKeys.UserKeys.USER_NAME, newUserName);
 
-                                        alertDialog.dismiss();
-                                    }
+                                            String displayName = "";
+                                            if (!TextUtils.isEmpty(newUserName) && !newUserName.startsWith("Guest-")) {
+                                                displayName = "Guest-" + newUserName;
+                                            }
+                                            username.setText(displayName);
 
-                                    @Override
-                                    public void failCallback(String response, boolean isNoInternet) {
-                                        Logger.error("ViewProfileAcivity : onButtonClick() : failure : " + response);
-                                        if (isNoInternet) {
-                                            Toast.makeText(CCViewProfileActivity.this, StaticMembers.PLEASE_CHECK_YOUR_INTERNET,
-                                                    Toast.LENGTH_LONG).show();
                                             alertDialog.dismiss();
                                         }
-                                    }
-                                });
-                        if (key.equalsIgnoreCase(CometChatKeys.AjaxKeys.GUEST_NAME)) {
-                            volley.addNameValuePair(key, newUserName);
+
+                                        @Override
+                                        public void failCallback(String response, boolean isNoInternet) {
+                                            Logger.error("ViewProfileAcivity : onButtonClick() : failure : " + response);
+                                            if (isNoInternet) {
+                                                Toast.makeText(CCViewProfileActivity.this, StaticMembers.PLEASE_CHECK_YOUR_INTERNET,
+                                                        Toast.LENGTH_LONG).show();
+                                                alertDialog.dismiss();
+                                            }
+                                        }
+                                    });
+                            if (key.equalsIgnoreCase(CometChatKeys.AjaxKeys.GUEST_NAME)) {
+                                volley.addNameValuePair(key, newUserName);
+                            } else {
+                                volley.addNameValuePair(key, "change_name");
+                            }
+
+                            volley.addNameValuePair(CometChatKeys.AjaxKeys.NAME, newUserName);
+
+                            volley.sendAjax();
                         } else {
-                            volley.addNameValuePair(key, "change_name");
+                            String url = "https://api.cometondemand.net/api/v2/updateUser";
+                            VolleyHelper volleyHelper = new VolleyHelper(CCViewProfileActivity.this, url, new VolleyAjaxCallbacks() {
+                                @Override
+                                public void successCallback(String s) {
+                                    Logger.error(TAG, "successCallback: updateUser: "+s);
+                                }
+
+                                @Override
+                                public void failCallback(String s, boolean b) {
+                                    Logger.error(TAG, "failCallback: updateUser: "+s);
+                                }
+                            });
+                            volleyHelper.addNameValuePair("UID",PreferenceHelper.get("USERNAME"));
+                            volleyHelper.addNameValuePair("name",newUserName);
+
+                            if(!TextUtils.isEmpty(SessionData.getInstance().getAvatarLink())){
+                                volleyHelper.addNameValuePair("profileURL",SessionData.getInstance().getAvatarLink());
+                                volleyHelper.addNameValuePair("avatarURL",SessionData.getInstance().getAvatarLink());
+                            }
+
+                            volleyHelper.sendAjax();
                         }
-
-                        volley.addNameValuePair(CometChatKeys.AjaxKeys.NAME, newUserName);
-
-                        volley.sendAjax();
 
                         SessionData.getInstance().setUserInfoHeartBeatFlag("1");
                         SessionData.getInstance().setName(newUserName);
@@ -632,7 +833,7 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
     public void onClick(View v) {
 //        NewMobile newmobilelangs = JsonPhp.getInstance().getNewMobile();
             if (v.getId() == R.id.iv_change_profile) {
-                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                /*Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 fileUri = ImageSharing.getOutputMediaFileUri(CCViewProfileActivity.this,StaticMembers.MEDIA_TYPE_IMAGE, false);
 
                 List<Intent> cameraIntents = new ArrayList<Intent>();
@@ -653,10 +854,24 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
                 Intent chooserIntent;
                 chooserIntent = Intent.createChooser(galleryIntent, (String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_COMPLETE_ACTION)));
                 chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[cameraIntents.size()]));
-                startActivityForResult(chooserIntent, 1);
+                startActivityForResult(chooserIntent, 1);*/
+                String[] PERMISSIONS = {android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.CAMERA};
+                if(CCPermissionHelper.hasPermissions(CCViewProfileActivity.this, PERMISSIONS)){
+                    startImagePickerIntent();
+                }else{
+                    ActivityCompat.requestPermissions(CCViewProfileActivity.this, PERMISSIONS, PERMISSION_STORAGE);
+                }
             } else {
                 Logger.error("CCViewProfileActivity : onClick() : default case executed");
             }
+    }
+
+    private void startImagePickerIntent() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        galleryIntent.setType(StaticMembers.IMAGE_TYPE);
+
+        Intent chooserIntent = Intent.createChooser(galleryIntent, "Complete action using");
+        startActivityForResult(chooserIntent, 1);
     }
 
     public void changeAvatar(Bitmap bitmap, String filename, final CometchatCallbacks callbacks) {
@@ -668,13 +883,19 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
                     super.handleMessage(msg);
                     String response = msg.obj.toString();
                     Logger.error("Response of change avatar =" + response);
+                    Logger.error(TAG, "handleMessage: msg.what: "+msg.what);
                     switch (msg.what) {
                         case 200:
                             try {
                                 JSONObject jsonresponse = new JSONObject(response);
-                                if (jsonresponse.getString("status").equals("1")) {
+                                if (jsonresponse.has("status") && jsonresponse.getString("status").equals("1")) {
                                     callbacks.successCallback();
-                                    SessionData.getInstance().setAvatarLink(jsonresponse.getString("avatar"));
+                                    if (jsonresponse.has("avatar")) {
+                                        SessionData.getInstance().setAvatarLink(jsonresponse.getString("avatar"));
+                                    }
+                                }else if(jsonresponse.has("profile_url")){
+                                    callbacks.successCallback();
+                                    SessionData.getInstance().setAvatarLink(jsonresponse.getString("profile_url"));
                                 }
                             } catch (Exception e) {
                                 callbacks.failCallback();
@@ -706,5 +927,18 @@ public class CCViewProfileActivity extends AppCompatActivity implements View.OnC
         AnimatorSet animatorSet = new AnimatorSet();
         animatorSet.playTogether(scaleOnlineStatusImageX,scaleOnlineStatusImageY,scaleStatusMessageImageX,scaleStatusMessageImageY);
         animatorSet.start();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_STORAGE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    startImagePickerIntent();
+                } else {
+                    Toast.makeText(this, "PERMISSION NOT GRANTED", Toast.LENGTH_SHORT).show();
+                }
+                break;
+        }
     }
 }

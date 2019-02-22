@@ -37,8 +37,8 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/imageViewStatusIcon"
         android:layout_alignStart="@+id/imageViewStatusIcon"
-        android:layout_toStartOf="@+id/textviewSingleChatUnreadCount"
-        android:layout_toLeftOf="@+id/textviewSingleChatUnreadCount"
+        android:layout_toStartOf="@+id/imgLock"
+        android:layout_toLeftOf="@+id/imgLock"
         android:layout_marginBottom="4dp"
         android:singleLine="true"
         android:layout_marginTop="7dp"
@@ -75,8 +75,8 @@
         android:layout_below="@+id/textviewUserName"
         android:layout_toRightOf="@+id/imageViewStatusIcon"
         android:layout_toEndOf="@+id/imageViewStatusIcon"
-        android:layout_toLeftOf="@+id/textviewSingleChatUnreadCount"
-        android:layout_toStartOf="@+id/textviewSingleChatUnreadCount"
+        android:layout_toLeftOf="@+id/imgLock"
+        android:layout_toStartOf="@+id/imgLock"
         android:text="@string/status_message"
         android:singleLine="true"
         android:ellipsize="end"
@@ -131,5 +131,19 @@
         android:paddingRight="5dp"
         android:paddingEnd="5dp"
         android:src="@drawable/cc_status_available" />
+    <ImageView
+        android:id="@+id/imgLock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_custom_chatroom_protected"
+        android:layout_centerVertical="true"
+        android:maxWidth="24dp"
+        android:padding="3dp"
+        android:visibility="gone"
+        android:adjustViewBounds="true"
+        android:layout_marginEnd="5dp"
+        android:layout_toLeftOf="@+id/textviewSingleChatUnreadCount"
+        android:layout_toStartOf="@+id/textviewSingleChatUnreadCount"
+        android:layout_marginRight="5dp" />
 
 </RelativeLayout>

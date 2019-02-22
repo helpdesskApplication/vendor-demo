@@ -59,8 +59,11 @@ public class AvatarService extends IntentService {
 
     private void handleActionChangeAvatar(String filename, final CometchatCallbacks callbacks, Bitmap bitmap) {
         try {
+
+            String URL =  URLFactory.getCometChatURL() +  "profile.php";
+            Logger.error(TAG,"URL = "+URL);
             ImageUploadHelper imageSendHelper = new ImageUploadHelper(PreferenceHelper.getContext(),
-                    URLFactory.getPhoneRegisterURL(), mHandler);
+                    URL , mHandler);
             if (bitmap != null) {
                 ByteArrayOutputStream outstr = new ByteArrayOutputStream();
                 String fileExtension = filename.substring(filename.lastIndexOf(".") + 1);
@@ -73,8 +76,8 @@ public class AvatarService extends IntentService {
 
                 File compressedImageFile = LocalStorageFactory.writeFile(LocalStorageFactory.getImageStoragePath(),
                         filename, outputData);
-                imageSendHelper.addNameValuePair(CometChatKeys.AjaxKeys.ACTION, "change_avatar");
-                imageSendHelper.addFile(CometChatKeys.FileUploadKeys.FILEDATA, compressedImageFile);
+                imageSendHelper.addNameValuePair(CometChatKeys.AjaxKeys.ACTION, "uploadprofilepic");
+                imageSendHelper.addFile("filedata", compressedImageFile);
                 imageSendHelper.sendImageAjax();
             }
         } catch (FileNotFoundException ex) {

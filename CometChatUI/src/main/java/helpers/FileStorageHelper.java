@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.widget.ImageView;
 
 
+import com.inscripts.factories.LocalStorageFactory;
 import com.inscripts.glide.Glide;
 import com.inscripts.glide.RequestBuilder;
 import com.inscripts.glide.request.RequestOptions;
@@ -67,7 +68,7 @@ public class FileStorageHelper {
                         try {
                             Bitmap bitmap = resource.getBitmap();
                             Logger.error(TAG,"OnResource ready Called");
-                            createDirectory(filePath);
+                            LocalStorageFactory.createDirectory(filePath);
                             bitmap = BitmapProcessingHelper.scaleBitmap(bitmap, bitmap.getHeight(), bitmap.getWidth(),
                                     filePath);
                             if (null != bitmap) {

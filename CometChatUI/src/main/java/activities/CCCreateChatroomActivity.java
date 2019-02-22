@@ -32,6 +32,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 
+import com.inscripts.enums.FeatureState;
 import com.inscripts.enums.GroupType;
 import com.inscripts.enums.SettingSubType;
 import com.inscripts.enums.SettingType;
@@ -49,6 +50,7 @@ import java.lang.reflect.Field;
 import cometchat.inscripts.com.cometchatcore.coresdk.CCUIHelper;
 import cometchat.inscripts.com.cometchatcore.coresdk.CometChat;
 import cometchat.inscripts.com.readyui.R;
+import helpers.CCAnalyticsHelper;
 import models.Groups;
 
 
@@ -73,6 +75,10 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
     private int colorPrimary, colorPrimaryDark;
     private CometChat cometChat;
     private ProgressBar progressWheel;
+    private FeatureState createPrivateGroup;
+    private FeatureState createProtectedGroup;
+    private FeatureState createPublicGroup;
+    private FeatureState createInviteGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +94,7 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
         }
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle("Create Group");
+        CCAnalyticsHelper.logFeatureEvent("CCCreateChatroom Activity");
 
         chatroomNameField = (EditText) findViewById(R.id.input_chatroom_name);
         chatroomTypeField = (EditText) findViewById(R.id.input_type);
@@ -145,9 +152,11 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
             }
         });
         setThemeColor();
+        initializeFeatureState();
     }
 
     private void createGroup() {
+        CCAnalyticsHelper.logFeatureEvent("Create Group");
         chatroomName = chatroomNameField.getText().toString().trim();
         chatroomPassword = chatroomPasswordField.getText().toString().trim();
         chatroomType = chatroomTypeField.getText().toString().trim();
@@ -182,11 +191,19 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
             }
 
         } /*else {
-            chatroomNameField.setText("");
-            assert textInputLayoutChatRoomName!= null;
-            textInputLayoutChatRoomName.setError(chatroomLang.get50());
-            chatroomTypeField.setError("Please select Group Type");
-        }*/
+                    chatroomNameField.setText("");
+                    assert textInputLayoutChatRoomName!= null;
+                    textInputLayoutChatRoomName.setError(chatroomLang.get50());
+                    chatroomTypeField.setError("Please select Group Type");
+                }*/
+    }
+
+
+    private void initializeFeatureState() {
+        createPrivateGroup = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE, SettingSubType.CREATE_PRIVATE_GROUPS_ENABLED));
+        createProtectedGroup = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE, SettingSubType.CREATE_PASSWORD_PROTECTED_GROUPS_ENABLED));
+        createPublicGroup = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE, SettingSubType.CREATE_PUBLIC_GROUPS_ENABLED));
+        createInviteGroup = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE, SettingSubType.CREATE_INVITATION_ONLY_GROUPS_ENABLED));
     }
 
     @Override
@@ -204,9 +221,9 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
         chatroomCancle.setTextColor(colorPrimary);
         Drawable background = btnCreateChatroom.getBackground();
         background.setColorFilter(colorPrimary, PorterDuff.Mode.SRC_ATOP);
-        if((boolean) cometChat.getCCSetting(new CCSettingMapper(SettingType.UI_SETTINGS, SettingSubType.IS_POPUPVIEW))){
+        if ((boolean) cometChat.getCCSetting(new CCSettingMapper(SettingType.UI_SETTINGS, SettingSubType.IS_POPUPVIEW))) {
             toolbar.getBackground().setColorFilter(colorPrimary, PorterDuff.Mode.SRC_ATOP);
-        }else {
+        } else {
             toolbar.setBackgroundColor(colorPrimary);
         }
         progressWheel.getIndeterminateDrawable().setColorFilter(colorPrimary, PorterDuff.Mode.SRC_ATOP);
@@ -241,10 +258,10 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
         RadioButton radioButtonPublicinvite = (RadioButton) view.findViewById(R.id.create_chatroom_radio_btn_invite);
         RadioButton radioButtonPrivate = view.findViewById(R.id.create_chatroom_radio_btn_private);
         radioButtonPublicinvite.setVisibility(View.GONE);
-        radioButtonPublic.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PUBLIC_GROUP)));
-        radioButtonPassword.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PASSWORD_PROTECTED_GROUP)));
-        radioButtonPublicinvite.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_INVITATION_ONLY_GROUP)));
-        radioButtonPrivate.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PRIVATE_GROUP)));
+        radioButtonPublic.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PUBLIC_GROUP)));
+        radioButtonPassword.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PASSWORD_PROTECTED_GROUP)));
+        radioButtonPublicinvite.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_INVITATION_ONLY_GROUP)));
+        radioButtonPrivate.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PRIVATE_GROUP)));
 
         ColorStateList colorStateList = new ColorStateList(
                 new int[][]{
@@ -260,11 +277,11 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
                 }
         );
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                radioButtonPublic.setButtonTintList(colorStateList);
-                radioButtonPassword.setButtonTintList(colorStateList);
-                radioButtonPublicinvite.setButtonTintList(colorStateList);
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            radioButtonPublic.setButtonTintList(colorStateList);
+            radioButtonPassword.setButtonTintList(colorStateList);
+            radioButtonPublicinvite.setButtonTintList(colorStateList);
+        }
 
 
         builder.setPositiveButton((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_OK)),
@@ -275,19 +292,19 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
                         int id = radioGroup.getCheckedRadioButtonId();
                         textInputLayoutChatroomType.setError(null);
                         if (id == R.id.create_chatroom_radio_btn_public) {
-                            chatroomTypeField.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PUBLIC_GROUP)));
+                            chatroomTypeField.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PUBLIC_GROUP)));
                             chatroomPasswordField.setVisibility(View.GONE);
                             textInputLayoutPassword.setVisibility(View.GONE);
                         } else if (id == R.id.create_chatroom_radio_btn_password) {
-                            chatroomTypeField.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PASSWORD_PROTECTED_GROUP)));
+                            chatroomTypeField.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PASSWORD_PROTECTED_GROUP)));
                             chatroomPasswordField.setVisibility(View.VISIBLE);
                             textInputLayoutPassword.setVisibility(View.VISIBLE);
                         } else if (id == R.id.create_chatroom_radio_btn_invite) {
-                            chatroomTypeField.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_INVITATION_ONLY_GROUP)));
+                            chatroomTypeField.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_INVITATION_ONLY_GROUP)));
                             chatroomPasswordField.setVisibility(View.GONE);
                             textInputLayoutPassword.setVisibility(View.GONE);
                         } else if (id == R.id.create_chatroom_radio_btn_private) {
-                            chatroomTypeField.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PRIVATE_GROUP)));
+                            chatroomTypeField.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PRIVATE_GROUP)));
                             chatroomPasswordField.setVisibility(View.GONE);
                             textInputLayoutPassword.setVisibility(View.GONE);
                         }
@@ -305,16 +322,16 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
 
 
         String type = chatroomTypeField.getText().toString();
-        if(type.equals((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PASSWORD_PROTECTED_GROUP)))){
+        if (type.equals((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PASSWORD_PROTECTED_GROUP)))) {
             radioButtonPassword.setChecked(true);
-        }else if(type.equals((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_INVITATION_ONLY_GROUP)))){
+        } else if (type.equals((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_INVITATION_ONLY_GROUP)))) {
             radioButtonPublicinvite.setChecked(true);
-        }else if(type.equals((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PUBLIC_GROUP)))){
+        } else if (type.equals((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PUBLIC_GROUP)))) {
             radioButtonPublic.setChecked(true);
-        }else {
+        } else {
             radioButtonPrivate.setChecked(true);
         }
-        
+
         final AlertDialog dialog = builder.create();
 
         // display dialog
@@ -336,205 +353,241 @@ public class CCCreateChatroomActivity extends AppCompatActivity {
         startWheel();
 
         if (chatroomType.equals((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PUBLIC_GROUP)))) {  // Public Chatroom
-            cometChat.createGroup(chatroomName, chatroomPassword, GroupType.PUBLIC_GROUP, new Callbacks() {
-                @Override
-                public void successCallback(JSONObject jsonObject) {
-                    stopWheel();
-                    try {
-                        Logger.error(TAG, ": createChatroom() : " + jsonObject);
-                        Logger.error(TAG, "jsonObject.getString(group_id) : " + jsonObject.getString("group_id"));
-
-                        // Creating group instance and handling backward compatibility
-                        if(!jsonObject.has("type")){
-                            jsonObject.put("type", 0);
-                        }
-                        if(!jsonObject.has("createdby")){
-                            jsonObject.put("createdby", SessionData.getInstance().getId());
-                        }
-                        Groups.insertNewGroup(jsonObject);
-                        /*group.groupId = jsonObject.getLong("group_id");
-                        group.lastUpdated = System.currentTimeMillis();
-                        if (jsonObject.has("groupname")) {
-                            group.name = jsonObject.getString("groupname");
-                        } else {
-                            group.name = jsonObject.getString("chatroomname");
-                        }
-                        group.memberCount = 1;
-                        group.type = GroupType.PUBLIC_GROUP.ordinal();
-                        group.password = jsonObject.getString("password");
-                        group.createdBy = 1;
-                        if (jsonObject.has("owner") && (jsonObject.get("owner") instanceof Boolean)) {
-                            group.owner = jsonObject.getBoolean("owner") ? 1 : 0;
-                        } else {
-                            group.owner = jsonObject.getInt("owner");
-                        }
-                        group.status = 1;
-                        group.save();*/
-
-                        Intent intent = new Intent(CCCreateChatroomActivity.this, CCGroupChatActivity.class);
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_ID, jsonObject.getString("group_id"));
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_NAME, chatroomName);
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_ISOWNER, true);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                        startActivity(intent);
-                        finish();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+            if (createPublicGroup == FeatureState.INACCESSIBLE) {
+                android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(CCCreateChatroomActivity.this);
+                alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
                     }
-                }
+                }).show();
+                stopWheel();
+            } else {
+                cometChat.createGroup(chatroomName, chatroomPassword, GroupType.PUBLIC_GROUP, new Callbacks() {
+                    @Override
+                    public void successCallback(JSONObject jsonObject) {
+                        stopWheel();
+                        try {
+                            Logger.error(TAG, ": createChatroom() : " + jsonObject);
+                            Logger.error(TAG, "jsonObject.getString(group_id) : " + jsonObject.getString("group_id"));
 
-                @Override
-                public void failCallback(JSONObject jsonObject) {
-                    stopWheel();
-                    Logger.error(TAG, "Create public chatroom fail responce = " + jsonObject);
-                }
-            });
+                            // Creating group instance and handling backward compatibility
+                            if (!jsonObject.has("type")) {
+                                jsonObject.put("type", 0);
+                            }
+                            if (!jsonObject.has("createdby")) {
+                                jsonObject.put("createdby", SessionData.getInstance().getId());
+                            }
+                            Groups.insertNewGroup(jsonObject);
+                            /*group.groupId = jsonObject.getLong("group_id");
+                            group.lastUpdated = System.currentTimeMillis();
+                            if (jsonObject.has("groupname")) {
+                                group.name = jsonObject.getString("groupname");
+                            } else {
+                                group.name = jsonObject.getString("chatroomname");
+                            }
+                            group.memberCount = 1;
+                            group.type = GroupType.PUBLIC_GROUP.ordinal();
+                            group.password = jsonObject.getString("password");
+                            group.createdBy = 1;
+                            if (jsonObject.has("owner") && (jsonObject.get("owner") instanceof Boolean)) {
+                                group.owner = jsonObject.getBoolean("owner") ? 1 : 0;
+                            } else {
+                                group.owner = jsonObject.getInt("owner");
+                            }
+                            group.status = 1;
+                            group.save();*/
+
+                            Intent intent = new Intent(CCCreateChatroomActivity.this, CCGroupChatActivity.class);
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_ID, jsonObject.getString("group_id"));
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_NAME, chatroomName);
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_ISOWNER, true);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                            startActivity(intent);
+                            finish();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void failCallback(JSONObject jsonObject) {
+                        stopWheel();
+                        Logger.error(TAG, "Create public chatroom fail responce = " + jsonObject);
+                    }
+                });
+            }
         } else if (chatroomType.equals((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_PASSWORD_PROTECTED_GROUP)))) { // password protected
-            cometChat.createGroup(chatroomName, chatroomPassword, GroupType.PASSWORD_PROTECTED, new Callbacks() {
-                @Override
-                public void successCallback(JSONObject jsonObject) {
-                    Logger.error(TAG,"createGroup: "+jsonObject);
-                    stopWheel();
-                    try {
-                        // Creating group instance and handling backward compatibility
-                        if(!jsonObject.has("type")){
-                            jsonObject.put("type", 1);
-                        }
-                        Logger.error(TAG,"userid: "+SessionData.getInstance().getId());
-                        if(!jsonObject.has("createdby")){
-                            jsonObject.put("createdby", SessionData.getInstance().getId());
-                        }
-                        Groups.insertNewGroup(jsonObject);
-                        /*group.groupId = jsonObject.getLong("group_id");
-                        group.lastUpdated = System.currentTimeMillis();
-                        if (jsonObject.has("groupname")) {
-                            group.name = jsonObject.getString("groupname");
-                        } else {
-                            group.name = jsonObject.getString("chatroomname");
-                        }
-                        group.memberCount = 1;
-                        group.type = GroupType.PASSWORD_PROTECTED.ordinal();
-                        group.password = jsonObject.getString("password");
-                        group.createdBy = 1;
-                        if (jsonObject.has("owner") && (jsonObject.get("owner") instanceof Boolean)) {
-                            group.owner = jsonObject.getBoolean("owner") ? 1 : 0;
-                        } else {
-                            group.owner = jsonObject.getInt("owner");
-                        }
-                        group.status = 1;*/
-//                        group.save();
-
-                        Intent intent = new Intent(CCCreateChatroomActivity.this, CCGroupChatActivity.class);
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_ID, jsonObject.getString("group_id"));
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_NAME, chatroomName);
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_ISOWNER, true);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                        startActivity(intent);
-                        finish();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+            if (createProtectedGroup == FeatureState.INACCESSIBLE) {
+                android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(CCCreateChatroomActivity.this);
+                alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
                     }
-                }
+                }).show();
+                stopWheel();
+            } else {
+                cometChat.createGroup(chatroomName, chatroomPassword, GroupType.PASSWORD_PROTECTED, new Callbacks() {
+                    @Override
+                    public void successCallback(JSONObject jsonObject) {
+                        Logger.error(TAG, "createGroup: " + jsonObject);
+                        stopWheel();
+                        try {
+                            // Creating group instance and handling backward compatibility
+                            if (!jsonObject.has("type")) {
+                                jsonObject.put("type", 1);
+                            }
+                            Logger.error(TAG, "userid: " + SessionData.getInstance().getId());
+                            if (!jsonObject.has("createdby")) {
+                                jsonObject.put("createdby", SessionData.getInstance().getId());
+                            }
+                            Groups.insertNewGroup(jsonObject);
+                            /*group.groupId = jsonObject.getLong("group_id");
+                            group.lastUpdated = System.currentTimeMillis();
+                            if (jsonObject.has("groupname")) {
+                                group.name = jsonObject.getString("groupname");
+                            } else {
+                                group.name = jsonObject.getString("chatroomname");
+                            }
+                            group.memberCount = 1;
+                            group.type = GroupType.PASSWORD_PROTECTED.ordinal();
+                            group.password = jsonObject.getString("password");
+                            group.createdBy = 1;
+                            if (jsonObject.has("owner") && (jsonObject.get("owner") instanceof Boolean)) {
+                                group.owner = jsonObject.getBoolean("owner") ? 1 : 0;
+                            } else {
+                                group.owner = jsonObject.getInt("owner");
+                            }
+                            group.status = 1;*/
+                            //                        group.save();
 
-                @Override
-                public void failCallback(JSONObject jsonObject) {
-                    stopWheel();
-                    Logger.error(TAG, "Create password protected chatroom error responce = " + jsonObject);
-                }
-            });
+                            Intent intent = new Intent(CCCreateChatroomActivity.this, CCGroupChatActivity.class);
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_ID, jsonObject.getString("group_id"));
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_NAME, chatroomName);
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_ISOWNER, true);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                            startActivity(intent);
+                            finish();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void failCallback(JSONObject jsonObject) {
+                        stopWheel();
+                        Logger.error(TAG, "Create password protected chatroom error responce = " + jsonObject);
+                    }
+                });
+            }
         } else if (chatroomType.equals((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE, SettingSubType.LANG_INVITATION_ONLY_GROUP)))) { // invite only
-            cometChat.createGroup(chatroomName, chatroomPassword, GroupType.INVITE_ONLY, new Callbacks() {
-                @Override
-                public void successCallback(JSONObject jsonObject) {
-                    Logger.error("createChatroom : successCallback - " + jsonObject.toString());
-                    stopWheel();
-                    try {
-                        // Creating group instance and handling backward compatibility
-                        if(!jsonObject.has("type")){
-                            jsonObject.put("type", 2);
-                        }
-                        if(!jsonObject.has("createdby")){
-                            jsonObject.put("createdby", SessionData.getInstance().getId());
-                        }
-                        Groups.insertNewGroup(jsonObject);
-                        /*Groups group = new Groups();
-                        group.groupId = jsonObject.getLong("group_id");
-                        group.lastUpdated = System.currentTimeMillis();
-                        if (jsonObject.has("groupname")) {
-                            group.name = jsonObject.getString("groupname");
-                        } else {
-                            group.name = jsonObject.getString("chatroomname");
-                        }
-                        group.memberCount = 1;
-                        group.type = GroupType.INVITE_ONLY.ordinal();
-                        group.password = jsonObject.getString("password");
-                        group.createdBy = 1;
-                        if (jsonObject.has("owner") && (jsonObject.get("owner") instanceof Boolean)) {
-                            group.owner = jsonObject.getBoolean("owner") ? 1 : 0;
-                        } else {
-                            group.owner = jsonObject.getInt("owner");
-                        }
-                        group.status = 1;
-                        group.save();*/
-
-//                        Logger.error(TAG,"createChatroom : InviteOnly : Group : " + group.toString());
-
-                        Intent intent = new Intent(CCCreateChatroomActivity.this, CCGroupChatActivity.class);
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_ID, jsonObject.getString("group_id"));
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_NAME, chatroomName);
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_ISOWNER, true);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                        startActivity(intent);
-                        finish();
-                    } catch (JSONException e) {
-                        Logger.error("createChatroom : e - " + jsonObject.toString());
-                        e.printStackTrace();
+            if (createInviteGroup == FeatureState.INACCESSIBLE) {
+                android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(CCCreateChatroomActivity.this);
+                alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
                     }
-                }
+                }).show();
+                stopWheel();
+            } else {
+                cometChat.createGroup(chatroomName, chatroomPassword, GroupType.INVITE_ONLY, new Callbacks() {
+                    @Override
+                    public void successCallback(JSONObject jsonObject) {
+                        Logger.error("createChatroom : successCallback - " + jsonObject.toString());
+                        stopWheel();
+                        try {
+                            // Creating group instance and handling backward compatibility
+                            if (!jsonObject.has("type")) {
+                                jsonObject.put("type", 2);
+                            }
+                            if (!jsonObject.has("createdby")) {
+                                jsonObject.put("createdby", SessionData.getInstance().getId());
+                            }
+                            Groups.insertNewGroup(jsonObject);
+                            /*Groups group = new Groups();
+                            group.groupId = jsonObject.getLong("group_id");
+                            group.lastUpdated = System.currentTimeMillis();
+                            if (jsonObject.has("groupname")) {
+                                group.name = jsonObject.getString("groupname");
+                            } else {
+                                group.name = jsonObject.getString("chatroomname");
+                            }
+                            group.memberCount = 1;
+                            group.type = GroupType.INVITE_ONLY.ordinal();
+                            group.password = jsonObject.getString("password");
+                            group.createdBy = 1;
+                            if (jsonObject.has("owner") && (jsonObject.get("owner") instanceof Boolean)) {
+                                group.owner = jsonObject.getBoolean("owner") ? 1 : 0;
+                            } else {
+                                group.owner = jsonObject.getInt("owner");
+                            }
+                            group.status = 1;
+                            group.save();*/
 
-                @Override
-                public void failCallback(JSONObject jsonObject) {
-                    stopWheel();
-                    Logger.error("createChatroom : failCallback - " + jsonObject.toString());
-                    Logger.error(TAG, "Create invite chatroom fail responce = " + jsonObject);
-                }
-            });
-        }else {
-            cometChat.createGroup(chatroomName, chatroomPassword, GroupType.PRIVATE, new Callbacks() {
-                @Override
-                public void successCallback(JSONObject jsonObject) {
-                    Logger.error(TAG, "successCallback: createGroup: "+jsonObject);
-                    stopWheel();
-                    try {
-                        if(!jsonObject.has("type")){
-                            jsonObject.put("type", 4);
+                            //                        Logger.error(TAG,"createChatroom : InviteOnly : Group : " + group.toString());
+
+                            Intent intent = new Intent(CCCreateChatroomActivity.this, CCGroupChatActivity.class);
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_ID, jsonObject.getString("group_id"));
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_NAME, chatroomName);
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_ISOWNER, true);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                            startActivity(intent);
+                            finish();
+                        } catch (JSONException e) {
+                            Logger.error("createChatroom : e - " + jsonObject.toString());
+                            e.printStackTrace();
                         }
-                        if(!jsonObject.has("createdby")){
-                            jsonObject.put("createdby", SessionData.getInstance().getId());
-                        }
-                        Groups.insertNewGroup(jsonObject);
-                        Intent intent = new Intent(CCCreateChatroomActivity.this, CCGroupChatActivity.class);
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_ID, jsonObject.getString("group_id"));
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_NAME, chatroomName);
-                        intent.putExtra(StaticMembers.INTENT_CHATROOM_ISOWNER, true);
-                        intent.putExtra("GROUP_TYPE", 4);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                        startActivity(intent);
-                        finish();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
                     }
-                }
 
-                @Override
-                public void failCallback(JSONObject jsonObject) {
+                    @Override
+                    public void failCallback(JSONObject jsonObject) {
+                        stopWheel();
+                        Logger.error("createChatroom : failCallback - " + jsonObject.toString());
+                        Logger.error(TAG, "Create invite chatroom fail responce = " + jsonObject);
+                    }
+                });
+            }
+        } else if(chatroomType.equals(cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_PRIVATE_GROUP)))){
+            if (createPrivateGroup == FeatureState.INACCESSIBLE) {
+                android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(CCCreateChatroomActivity.this);
+                alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).show();
+                stopWheel();
+            } else {
+                cometChat.createGroup(chatroomName, chatroomPassword, GroupType.PRIVATE, new Callbacks() {
+                    @Override
+                    public void successCallback(JSONObject jsonObject) {
+                        Logger.error(TAG, "successCallback: createGroup: " + jsonObject);
+                        stopWheel();
+                        try {
+                            if (!jsonObject.has("type")) {
+                                jsonObject.put("type", 4);
+                            }
+                            if (!jsonObject.has("createdby")) {
+                                jsonObject.put("createdby", SessionData.getInstance().getId());
+                            }
+                            Groups.insertNewGroup(jsonObject);
+                            Intent intent = new Intent(CCCreateChatroomActivity.this, CCGroupChatActivity.class);
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_ID, jsonObject.getString("group_id"));
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_NAME, chatroomName);
+                            intent.putExtra(StaticMembers.INTENT_CHATROOM_ISOWNER, true);
+                            intent.putExtra("GROUP_TYPE", 4);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                            startActivity(intent);
+                            finish();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
 
-                }
-            });
+                    @Override
+                    public void failCallback(JSONObject jsonObject) {
+
+                    }
+                });
+            }
         }
     }
 

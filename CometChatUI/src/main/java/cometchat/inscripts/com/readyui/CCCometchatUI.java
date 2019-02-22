@@ -11,6 +11,7 @@ import android.support.multidex.MultiDexApplication;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.flurry.android.FlurryAgent;
 import com.inscripts.enums.StatusOption;
 import com.inscripts.interfaces.Callbacks;
 import com.inscripts.orm.SugarContext;
@@ -20,6 +21,7 @@ import org.json.JSONObject;
 
 import activities.CometChatActivity;
 import cometchat.inscripts.com.cometchatcore.coresdk.CometChat;
+import helpers.CCAnalyticsHelper;
 import receivers.NetworkChangeReceiver;
 
 /**
@@ -37,6 +39,8 @@ public class CCCometchatUI extends MultiDexApplication implements Application.Ac
     public void onCreate() {
         super.onCreate();
         SugarContext.init(this);
+        CCAnalyticsHelper.initAnalytics(this);
+
         networkChangeReceiver=new NetworkChangeReceiver();
         if (Build.VERSION.SDK_INT >= 24) { registerReceiver(networkChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)); }
         registerActivityLifecycleCallbacks(this);

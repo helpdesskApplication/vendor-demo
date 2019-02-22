@@ -1698,7 +1698,7 @@ public class OneOnOneMessageAdapter extends RecyclerViewCursorAdapter<RecyclerVi
                             Element imageElement = doc.select("img").first();
                             final String absoluteUrl = imageElement.absUrl("src");
                             botViewHolder.imageMessage.setVisibility(View.VISIBLE);
-                            LocalStorageFactory.loadImage(context, absoluteUrl, botViewHolder.imageMessage, R.drawable.ic_broken_image);
+                            LocalStorageFactory.loadImageUsingURL(context, absoluteUrl, botViewHolder.imageMessage, R.drawable.ic_broken_image);
                             botViewHolder.imageTitle.setVisibility(View.GONE);
                             botViewHolder.imageMessage.setOnClickListener(new View.OnClickListener() {
 

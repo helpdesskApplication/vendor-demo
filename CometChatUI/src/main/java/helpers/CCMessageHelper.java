@@ -369,7 +369,7 @@ public class CCMessageHelper {
                         onOneMessage.messageStatus = 1;
                         onOneMessage.save();
                         Logger.error(TAG,"CallSession ONGOING = "+PreferenceHelper.get(BroadCastReceiverKeys.AvchatKeys.CALL_SESSION_ONGOING));
-                        if(PreferenceHelper.get(BroadCastReceiverKeys.AvchatKeys.CALL_SESSION_ONGOING).equals("1")){
+                        if(PreferenceHelper.get(BroadCastReceiverKeys.AvchatKeys.CALL_SESSION_ONGOING) != null && PreferenceHelper.get(BroadCastReceiverKeys.AvchatKeys.CALL_SESSION_ONGOING).equals("1")){
                             cometChat.sendBusyTone(String.valueOf(fromid), new Callbacks() {
                                 @Override
                                 public void successCallback(JSONObject jsonObject) {
@@ -631,6 +631,8 @@ public class CCMessageHelper {
                         break;
 
                     case MessageTypeKeys.AVBROADCAST_END:
+                        String broadcastEndedMessage = (String)cometChat.
+                                getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_BROADCAST_ENDED));
                         onOneMessage = new OneOnOneMessage();
                         onOneMessage.remoteId = remoteid;
                         onOneMessage.fromId = fromid;
@@ -640,7 +642,7 @@ public class CCMessageHelper {
                             onOneMessage.toId = sessionData.getId();
                         }
                         onOneMessage.self = self;
-                        onOneMessage.message = "This broadcast has ended.";
+                        onOneMessage.message = broadcastEndedMessage;
                         onOneMessage.read = old;
                         //onOneMessage.imageUrl = messagejson.getString("callid");
                         onOneMessage.sentTimestamp = timestamp;
@@ -1105,7 +1107,9 @@ public class CCMessageHelper {
 
                     case MessageTypeKeys.AVBROADCAST_END:
                         Logger.error(TAG, "Group AVBROADCAST_END = " + message);
-                        groupMessage = new GroupMessage(remoteId, fromId, chatroomId, "This broadcast has ended.",
+                        String broadcastEndedMessage = (String)cometChat.
+                                getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_BROADCAST_ENDED));
+                        groupMessage = new GroupMessage(remoteId, fromId, chatroomId, broadcastEndedMessage,
                                 timestamp, senderName, MessageTypeKeys.AVBROADCAST_END, "",
                                 textColor, 0, 1);
 

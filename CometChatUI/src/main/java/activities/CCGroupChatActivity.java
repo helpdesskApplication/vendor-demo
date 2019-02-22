@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -115,12 +116,12 @@ import cometchat.inscripts.com.cometchatcore.coresdk.CometChat;
 import cometchat.inscripts.com.cometchatcore.coresdk.MessageSDK;
 import cometchat.inscripts.com.readyui.R;
 import customsviews.ConfirmationWindow;
+import helpers.CCAnalyticsHelper;
 import helpers.CCMessageHelper;
 import helpers.FileSharing;
 import helpers.NotificationDataHelper;
 import models.GroupMessage;
 import models.Groups;
-import models.OneOnOneMessage;
 import pojo.ColorPojo;
 import videochat.CCVideoChatActivity;
 
@@ -132,8 +133,10 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     private SessionData sessionData;
     private Toolbar toolbar;
     private RelativeLayout ccContainer, customMenu, chatFooter;
-    private int colorPrimary, colorPrimaryDark, picassImageName;
-    private String chatroomName, shareImageUri, shareVideoUri, shareAudioUri, audioFileNamewithPath;
+    private int colorPrimaryDark, picassImageName;
+    private static int colorPrimary;
+    private String chatroomName, shareImageUri, shareVideoUri, shareAudioUri;
+    private static String audioFileNamewithPath;
     private long firstMessageID = 0L;
     private long chatroomId;
     private Intent data;
@@ -154,8 +157,9 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     private GroupMessageAdapter groupMessageAdapter;
     private Bitmap picassaBitmap;
     private BroadcastReceiver broadcastReceiver;
-    private boolean isRecording = false, isVoiceNoteplaying = false;
-    private MediaRecorder voiceRecorder;
+    private boolean isVoiceNoteplaying = false;
+    private static boolean isRecording;
+    private static MediaRecorder voiceRecorder;
     private Runnable timerRunnable;
     private Handler seekHandler = new Handler();
     private static Uri fileUri;
@@ -181,7 +185,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     private boolean isInitialLoad = true;
     private Button btnScroll;
     private long newMessageCount;
-    private boolean isCloseWindowEnabled;
+    private boolean setBackButton = true;
     private FeatureState grpAvCallState,grpAudioCallState,grpFileTransferState,grpVoicenoteState;
     private FeatureState grpStickerState,grpSmileyState,grpAVBroadcastState;
     private FeatureState grpHandwriteState;
@@ -190,6 +194,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     private FeatureState grpClearConversationState;
     private FeatureState colorYourTextState;
     private boolean isPrivateGroup;
+    private FeatureState inviteUsersToGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -213,10 +218,10 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setupFields();
         setCCTheme();
-        setFieldListners();
         initializeFeatureState();
+        setFieldListners();
         processIntentData(getIntent());
-        if(isCloseWindowEnabled){
+        if(!setBackButton){
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             toolbar.setNavigationIcon(R.drawable.cc_ic_action_cancel);
         }
@@ -292,8 +297,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         grpWriteBoardState = (FeatureState)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.GRP_WRITEBOARD_ENABLED));
         grpClearConversationState = (FeatureState)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.GRP_CLEAR_CONVERSATION_ENABLED));
         colorYourTextState = (FeatureState)cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE,SettingSubType.GRP_COLOR_YOUR_TEXT));
-        Logger.error(TAG, "initializeFeatureState: grpVoicenoteState: "+grpVoicenoteState.name());
-        Logger.error(TAG, "initializeFeatureState: grpFileTransferState: "+grpFileTransferState.name());
+        inviteUsersToGroup = (FeatureState) cometChat.getCCSetting(new CCSettingMapper(SettingType.FEATURE, SettingSubType.INVITE_USERS_TO_GROUPS_ENABLED));
     }
 
     @Override
@@ -331,6 +335,12 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         btnScroll.getBackground().setColorFilter(Color.parseColor("#8e8e92"), PorterDuff.Mode.SRC_ATOP);
     }
 
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        Logger.error(TAG, "onConfigurationChanged: isRecording: "+isRecording);
+    }
 
     private void setupFields() {
         messageField = (EditText) findViewById(R.id.editTextChatMessage);
@@ -380,7 +390,18 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         toolbarTitle = (TextView) findViewById(R.id.title);
         toolbarSubTitle = (TextView) findViewById(R.id.subTitle);
         toolbarSubTitle.setVisibility(View.GONE);
-        voiceNotebtn.setBackgroundResource(R.drawable.ic_mic_6);
+        if (isRecording) {
+            messageField.setEnabled(false);
+            btnChatMenuSmiliey.setEnabled(false);
+            voiceNotebtn.setBackgroundResource(R.drawable.ic_mic);
+            AnimationDrawable animationDrawable = (AnimationDrawable) voiceNotebtn.getBackground();
+            voiceNotebtn.getBackground().setColorFilter(colorPrimary, PorterDuff.Mode.SRC_ATOP);
+            animationDrawable.start();
+        } else {
+            messageField.setEnabled(true);
+            btnChatMenuSmiliey.setEnabled(true);
+            voiceNotebtn.setBackgroundResource(R.drawable.ic_mic_6);
+        }
         tvHandwriteMessage.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_HANDWRITE)));
         tvCollaborativeDoc.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_WRITEBOARD)));
         tvWhiteBoard.setText((String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_WHITEBOARD)));
@@ -396,6 +417,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         btnMenu.setOnClickListener(this);
         btnAVBroadcast.setOnClickListener(this);
         txtLoadEarlierMessages.setVisibility(View.VISIBLE);
+        txtLoadEarlierMessages.setText((String)cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_LOAD_EARLIER)));
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -430,14 +452,17 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
             if(grpVoicenoteState != FeatureState.INVISIBLE){
                 sendButton.setVisibility(View.INVISIBLE);
                 voiceNotebtn.setVisibility(View.VISIBLE);
+            }else {
+                sendButton.setVisibility(View.VISIBLE);
+                voiceNotebtn.setVisibility(View.INVISIBLE);
             }
         } else {
-            sendButton.setVisibility(View.VISIBLE);
             btnChatMenuSharePhoto.setVisibility(View.GONE);
             btnChatMenuShareVideo.setVisibility(View.GONE);
             btnCameraButton.setVisibility(View.GONE);
             viewCapturePhoto.setVisibility(View.GONE);
             viewCaptureVideo.setVisibility(View.GONE);
+            sendButton.setVisibility(View.VISIBLE);
             voiceNotebtn.setVisibility(View.INVISIBLE);
         }
         if(grpSmileyState != FeatureState.INVISIBLE){
@@ -643,7 +668,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         NotificationDataHelper.deleteFromMap((int) chatroomId);
 
         if(intent.hasExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED)){
-            isCloseWindowEnabled = intent.getBooleanExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED,false);
+            setBackButton = intent.getBooleanExtra(BroadCastReceiverKeys.IntentExtrasKeys.CLOSE_WINDOW_ENABLED,true);
         }
         /*if (intent.hasExtra("ImageUri")) {
             shareImageUri = intent.getStringExtra("ImageUri");
@@ -1315,7 +1340,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
             showCustomActionBarPopup(menuItemView);
 
         } else if (i == android.R.id.home) {
-            if(isCloseWindowEnabled){
+            if(!setBackButton){
                 MessageSDK.closeCometChatWindow(CCGroupChatActivity.this, ccContainer);
                 cometChat.sendCloseCCWindowResponce();
             }else{
@@ -1409,7 +1434,11 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
 
     @SuppressLint("HandlerLeak")
     private void initiateCall(final boolean isAudioOnlyCall) {
-
+            if (isAudioOnlyCall) {
+                CCAnalyticsHelper.logFeatureEvent("Audio Conference Call");
+            } else {
+                CCAnalyticsHelper.logFeatureEvent("Video Conference Call");
+            }
             Logger.error(TAG,"isAudioOnly Call ? "+chatroomId);
             cometChat.sendConferenceRequest(String.valueOf(chatroomId),isAudioOnlyCall,new Callbacks() {
                 @Override
@@ -1442,7 +1471,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     public void onBackPressed() {
         super.onBackPressed();
 
-        if(isCloseWindowEnabled){
+        if(!setBackButton){
             MessageSDK.closeCometChatWindow(CCGroupChatActivity.this, ccContainer);
             cometChat.sendCloseCCWindowResponce();
         }else{
@@ -1705,6 +1734,9 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     private void openCaptureMediaBottomSheet() {
         dirtyView.setVisibility(View.VISIBLE);
         hideSoftKeyboard(CCGroupChatActivity.this);
+        if(smiliKeyBoard.isKeyboardVisibile()){
+            smiliKeyBoard.dismissKeyboard();
+        }
         sheetCameraBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         AnimateBottomSheetViews();
     }
@@ -1738,6 +1770,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void startHandwrite() {
+        CCAnalyticsHelper.logFeatureEvent("Group Handwrite Message");
         Intent i = new Intent(getApplicationContext(), CCHandwriteActivity.class);
         i.putExtra(CometChatKeys.AjaxKeys.SENDERNAME, chatroomName);
         i.putExtra(CometChatKeys.AjaxKeys.BASE_DATA, PreferenceHelper.get(PreferenceKeys.DataKeys.BASE_DATA));
@@ -1747,6 +1780,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void startWriteBoard() {
+        CCAnalyticsHelper.logFeatureEvent("Group Collaborative Document");
         cometChat.sendWriteBoardRequest(String.valueOf(chatroomId),true, new Callbacks() {
             @Override
             public void successCallback(JSONObject jsonObject) {
@@ -1770,6 +1804,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void startWhiteBoard() {
+        CCAnalyticsHelper.logFeatureEvent("Group WhiteBoard Message");
         cometChat.sendWhiteBoardRequest(String.valueOf(chatroomId), true, new Callbacks() {
             @Override
             public void successCallback(JSONObject jsonObject) {
@@ -1794,7 +1829,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
 
     private void startAvBroadcast(){
         Logger.error(TAG,"Start AV broadcast called");
-
+        CCAnalyticsHelper.logFeatureEvent("Group AV Broadcast Started");
         cometChat.sendGrpAVBroadCastRequest(String.valueOf(chatroomId), new Callbacks() {
             @Override
             public void successCallback(JSONObject jsonObject) {
@@ -2046,8 +2081,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
             @Override
             public void onClick(View v) {
                 showPopup.dismiss();
-
-
+                CCAnalyticsHelper.logFeatureEvent("View Members");
                 viewChatroomUsers();
             }
         });
@@ -2056,6 +2090,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
             clearConversation.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    CCAnalyticsHelper.logFeatureEvent("Group Clear Conversation");
                     showPopup.dismiss();
                     if (grpClearConversationState == FeatureState.INACCESSIBLE) {
                         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCGroupChatActivity.this);
@@ -2103,8 +2138,17 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         inviteUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showPopup.dismiss();
-                inviteUsers();
+                CCAnalyticsHelper.logFeatureEvent("Invite User");
+                if (inviteUsersToGroup ==FeatureState.INACCESSIBLE) {
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCGroupChatActivity.this);
+                    alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                        }
+                    }).show();
+                } else {
+                    showPopup.dismiss();
+                    inviteUsers();
+                }
             }
         });
 
@@ -2112,6 +2156,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
             @Override
             public void onClick(View v) {
                 showPopup.dismiss();
+                CCAnalyticsHelper.logFeatureEvent("Leave Group");
                 cometChat.leaveGroup(chatroomId, new Callbacks() {
                     @Override
                     public void successCallback(JSONObject jsonObject) {
@@ -2139,6 +2184,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
                 @Override
                 public void onClick(View view) {
                     showPopup.dismiss();
+                    CCAnalyticsHelper.logFeatureEvent("Color Your Text");
                     if (colorYourTextState == FeatureState.INACCESSIBLE) {
                         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(CCGroupChatActivity.this);
                         alertDialogBuilder.setMessage(R.string.rolebase_warning).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -2162,6 +2208,8 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         llDeleteChatroom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                showPopup.dismiss();
+                CCAnalyticsHelper.logFeatureEvent("Delete Chatroom");
                 ChatroomManager.deleteChatroom(CCGroupChatActivity.this, chatroomId, new CometchatCallbacks() {
                     @Override
                     public void successCallback() {
@@ -2187,6 +2235,8 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         llRenameChatroom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                showPopup.dismiss();
+                CCAnalyticsHelper.logFeatureEvent("Rename Group");
                 ChatroomManager.renameGroup(CCGroupChatActivity.this, chatroomId, chatroomName, new Callbacks() {
                     @Override
                     public void successCallback(JSONObject jsonObject) {
@@ -2219,6 +2269,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
             @Override
             public void onClick(View view) {
                 showPopup.dismiss();
+                CCAnalyticsHelper.logFeatureEvent("Unban Users");
                 viewBannedUsers();
             }
         });
@@ -2254,6 +2305,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void sendTextMessage(final GroupMessage message) {
+        CCAnalyticsHelper.logFeatureEvent("Group Text Message");
         cometChat.sendMessage(message.getId(), String.valueOf(chatroomId), message.message, selectedColor,true, new Callbacks() {
             @Override
             public void successCallback(JSONObject sendResponse) {
@@ -2273,7 +2325,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
                         message.remoteId = id;
                         message.messageStatus = 1;
                         message.retryCount = 3;
-                        //mess.message = String.valueOf(Html.fromHtml(messageAfterSuccess));
+                        message.message = String.valueOf(Html.fromHtml(messageAfterSuccess));
                         message.save();
                         runOnUiThread(new Runnable() {
                             public void run() {
@@ -2310,7 +2362,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         /*final GroupMessage message = new GroupMessage(0, sessionData.getId(), chatroomId, imagePath,
                 System.currentTimeMillis(), "", MessageTypeKeys.IMAGE_MESSAGE, "",
                 "#000", 1);*/
-
+        CCAnalyticsHelper.logFeatureEvent("Group Image Message");
         final GroupMessage message = new GroupMessage(0L,
                 sessionData.getId(), chatroomId, imagePath, System.currentTimeMillis(), "",
                 MessageTypeKeys.IMAGE_MESSAGE, "", "#000", 1, 0);
@@ -2378,6 +2430,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void sendAudioNote(final GroupMessage message) {
+        Logger.error(TAG, "sendAudioNote: chatroomId: "+chatroomId);
         cometChat.sendAudioFile(message.getId(), new File(message.message), chatroomId+"",true, new Callbacks() {
             @Override
             public void successCallback(JSONObject sendResponse) {
@@ -2424,6 +2477,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void sendVideo(final GroupMessage message) {
+        CCAnalyticsHelper.logFeatureEvent("Group Video Message");
         cometChat.sendVideo(message.getId(), new File(message.message), chatroomId+"",true, new Callbacks() {
             @Override
             public void successCallback(JSONObject sendResponse) {
@@ -2469,6 +2523,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void sendSticker(final GroupMessage message) {
+        CCAnalyticsHelper.logFeatureEvent("Group Sticker Message");
         cometChat.sendSticker(message.getId(), message.message, chatroomId+"",true, new Callbacks() {
             @Override
             public void successCallback(JSONObject sendResponse) {
@@ -2655,6 +2710,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
         Logger.error(TAG,"LoadChatHistory called");
         Logger.error(TAG,"LoadChatHistory ChatroomID = "+chatroomId);
         Logger.error(TAG,"LoadChatHistory firstMessageID = "+firstMessageID);
+        final String noMoreMessages = (String) cometChat.getCCSetting(new CCSettingMapper(SettingType.LANGUAGE,SettingSubType.LANG_NO_MORE_MESSAGES));
         cometChat.getGroupChatHistory(chatroomId, firstMessageID, new Callbacks() {
             @Override
             public void successCallback(JSONObject jsonObject) {
@@ -2679,7 +2735,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
                             @Override
                             public void run() {
                                 refreshLayout.setRefreshing(false);
-                                Toast.makeText(CCGroupChatActivity.this, "No More Messages", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(CCGroupChatActivity.this, noMoreMessages, Toast.LENGTH_SHORT).show();
                             }
                         });
                     }
@@ -2690,7 +2746,7 @@ public class CCGroupChatActivity extends AppCompatActivity implements View.OnCli
                         @Override
                         public void run() {
                             refreshLayout.setRefreshing(false);
-                            Toast.makeText(CCGroupChatActivity.this, "No More Messages", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(CCGroupChatActivity.this, noMoreMessages, Toast.LENGTH_SHORT).show();
                         }
                     });
                     e.printStackTrace();

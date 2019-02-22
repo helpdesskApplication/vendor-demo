@@ -42,6 +42,7 @@ import java.util.List;
 import adapters.BroadcastListAdapter;
 import cometchat.inscripts.com.cometchatcore.coresdk.CCUIHelper;
 import cometchat.inscripts.com.cometchatcore.coresdk.CometChat;
+import helpers.CCAnalyticsHelper;
 import models.Contact;
 
 public class CCBroadcastMessageActivity extends AppCompatActivity implements AdapterView.OnItemClickListener,EmojiGridviewImageAdapter.EmojiClickInterface , SearchView.OnQueryTextListener{
@@ -73,6 +74,7 @@ public class CCBroadcastMessageActivity extends AppCompatActivity implements Ada
         if((boolean) cometChat.getCCSetting(new CCSettingMapper(SettingType.UI_SETTINGS, SettingSubType.IS_POPUPVIEW))){
             CCUIHelper.convertActivityToPopUpView(this,ccContainer,toolbar);
         }
+        CCAnalyticsHelper.logFeatureEvent("CCBroadcastMessageActivity");
         setCCTheme();
         setFieldListners();
         ArrayList<String> savedCheckbox = new ArrayList<>();
@@ -135,6 +137,7 @@ public class CCBroadcastMessageActivity extends AppCompatActivity implements Ada
         sendBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                CCAnalyticsHelper.logFeatureEvent("Send Broadcast Message");
                 try {
                     if (null != adapter) {
 

@@ -167,7 +167,9 @@ public class UnbanChatroomUserActivity extends AppCompatActivity {
                 } else {
                     member.setName(data.getString("n"));
                 }
-                unban.add(member);
+                if (unban.size() > 0) {
+                    tv.setVisibility(View.GONE);
+                }
             }
         }
         tv.setVisibility(View.GONE);
